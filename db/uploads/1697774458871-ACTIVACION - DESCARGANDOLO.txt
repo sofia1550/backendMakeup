@@ -1,0 +1,39 @@
+
+Entendido, tienes un backend bien estructurado con rutas y modelos para gestionar servicios, disponibilidades y reservas. Siguiendo con lo que has mencionado anteriormente, aquí está lo que necesitas hacer:
+
+Frontend:
+
+Cuando el usuario selecciona una disponibilidad y confirma, debes enviar una petición al endpoint /serviceId/reserve/availabilityId para crear una reserva en estado pendiente.
+Luego, rediriges al usuario a la página de confirmación donde puede subir su comprobante de pago.
+Una vez que el usuario suba el comprobante de pago, puedes enviar una petición al endpoint /reservations/reservaId/complete para marcar la reserva como completada.
+Además, durante este proceso, es recomendable que actualices el estado de la disponibilidad seleccionada a "reservada" para que no aparezca como disponible para otros usuarios. Esto se puede hacer en el backend después de que se haya creado una reserva exitosa.
+Backend:
+
+En el modelo, necesitas tener una función que, después de confirmar una reserva, cambie el estado de la disponibilidad en la base de datos a "reservada".
+En las rutas, cuando se llama al endpoint para completar una reserva, después de cambiar el estado de la reserva a "completada", también debes actualizar el estado de la disponibilidad asociada a "reservada".
+
+
+
+okey entonces vamos a profundizar un poco mas para que todo salga bien ya que esto es para una aplicacion real, tenemos 5 archivos que haran la reserva exitosa okey?
+
+MODELSERVICE
+
+ROUTESSERVICE
+
+SERVICESLICE
+
+MODALSERVICE
+
+CONFIRMRESERVATION
+
+
+DECIME COMO ENCARAMOS ESTOS 5 ARCHIVOS PARA:
+
+1) AL SUBIR SELECCIONAR UNA DISPONIBILIDAD, SE ABRE EL MODAL DE CONFIRMACION(YA ESTA ECHO)
+
+2) QUEREMOS QUE EN EL MODAL DE CONFIRMACION SE MANEJE EL ESTADO DE LA DISPONIBILIDAD EN BASE A QUE SI EL USUARIO SUBIO UN COMPROBANTE DE PAGO;
+
+3) SI EL USUARIO SUBE UN COMPROBANTE DE PAGO LA DISPONIBILIDAD CAMBIARA SU ESTADO A RESERVADO COMO TAMBIEN EN EL CALENDARIO PARA NO APAREZCA COMO DISPONIBLE
+
+
+DECIME QUE ARCHIVOS TE PASO PARA EMPEZAR
