@@ -50,6 +50,18 @@ router.put('/cursos/:cursoId/disponibilidades/:disponibilidadId', async (req, re
         res.status(500).send(error.message);
     }
 });
+router.get('/cursos/:cursoId/disponibilidades', async (req, res) => {
+    const { cursoId } = req.params;
+    const { estado, limite } = req.query; // Parámetros opcionales para filtrar por estado y limitar el número de resultados
+
+    try {
+        const disponibilidades = await cursoModel.obtenerDisponibilidades(cursoId, estado, limite);
+        res.json(disponibilidades);
+    } catch (error) {
+        console.error("Error al obtener disponibilidades:", error);
+        res.status(500).send(error.message);
+    }
+});
 
 router.post('/reservas/:id/comprobante', uploadd.single('comprobante'), async (req, res) => {
     const reservaId = req.params.id;

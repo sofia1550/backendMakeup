@@ -11,6 +11,28 @@ exports.actualizarEstadoDisponibilidad = async (cursoId, disponibilidadId, nuevo
     }
 };
 
+exports.obtenerDisponibilidades = async (cursoId, estado, limite) => {
+    let sqlQuery = 'SELECT * FROM disponibilidades_cursos WHERE curso_id = ?';
+    const params = [cursoId];
+
+    if (estado) {
+        sqlQuery += ' AND estado = ?';
+        params.push(estado);
+    }
+
+    if (limite) {
+        sqlQuery += ' ORDER BY fecha_inicio DESC LIMIT ?';
+        params.push(parseInt(limite));
+    }
+
+    try {
+        const results = await query(sqlQuery, params);
+        return results;
+    } catch (error) {
+        console.error("Error al obtener disponibilidades:", error);
+        throw new Error("Error al obtener disponibilidades");
+    }
+};
 
 
 exports.agregarReservaConDatos = async (disponibilidadId, usuarioId, estado, nombreUsuario, correoUsuario, telefonoUsuario, horarios) => {
