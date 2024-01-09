@@ -8,7 +8,10 @@ require('dotenv').config();
 const { sendEmail } = require('../utils/emailServices');
 
 
-
+const loginValidationRules = [
+    body('usernameOrEmail').notEmpty().withMessage('El nombre de usuario o correo electrónico es obligatorio'),
+    body('password').notEmpty().withMessage('La contraseña es obligatoria')
+];
 const userValidationRules = [
     body('username').isLength({ min: 5 }).withMessage('El nombre de usuario debe tener al menos 5 caracteres'),
     body('password').isLength({ min: 8 }).withMessage('La contraseña debe tener al menos 8 caracteres'),
@@ -108,14 +111,18 @@ router.post('/register', userValidationRules, async (req, res) => {
     }
 });
 
-router.post('/login', async (req, res) => {
-    console.log("Intento de inicio de sesión:", req.body);
-    const { usernameOrEmail, password } = req.body; // Cambiado para aceptar nombre de usuario o email
+router.post('/login', loginValidationRules, async (req, res) => {
+    // Comprobar errores de validación
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { usernameOrEmail, password } = req.body;
 
     try {
         // Buscar usuario por nombre de usuario o correo electrónico
         const user = await userModel.findUserByUsernameOrEmail(usernameOrEmail);
-
         if (!user) {
             return res.status(400).json({ error: 'Usuario o contraseña incorrectos' });
         }

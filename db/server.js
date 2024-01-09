@@ -14,6 +14,7 @@ const protectRoute = require('../middlewares/autMiddleware');
 const fileUploadRoutes = require("../models/comprobantes/fileUpload");
 const coursesRoutes = require("../routes/courseRoutes");
 const { sendEmail } = require('../utils/emailServices'); // Asegúrate de que la ruta sea correcta
+const { body, validationResult } = require('express-validator');
 
 
 const mercadoPagoRoutes = require('../routes/mercadoPagoRoutes');
@@ -152,15 +153,23 @@ app.get('/api/create-helper-user', async (req, res) => {
 
 
 require('dotenv').config();
+const loginValidationRules = [
+  body('usernameOrEmail').notEmpty().withMessage('El nombre de usuario o correo electrónico es obligatorio'),
+  body('password').notEmpty().withMessage('La contraseña es obligatoria'),
+];
 
-app.post('/api/login', async (req, res) => {
-  console.log("Intento de inicio de sesión:", req.body);
-  const { usernameOrEmail, password } = req.body; // Cambiado para aceptar nombre de usuario o email
+app.post('/api/login', loginValidationRules, async (req, res) => {
+  // Comprobar errores de validación
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { usernameOrEmail, password } = req.body;
 
   try {
     // Buscar usuario por nombre de usuario o correo electrónico
     const user = await userModel.findUserByUsernameOrEmail(usernameOrEmail);
-
     if (!user) {
       return res.status(400).json({ error: 'Usuario o contraseña incorrectos' });
     }
@@ -170,13 +179,6 @@ app.post('/api/login', async (req, res) => {
     if (!isPasswordValid) {
       return res.status(400).json({ error: 'Usuario o contraseña incorrectos' });
     }
-
-    // Mostrar los detalles del usuario en la consola del backend
-    console.log("Usuario que inició sesión:", {
-      id: user.id,
-      username: user.username,
-      email: user.email // Asumiendo que el modelo de usuario tiene un campo de email
-    });
 
     // Crear el token JWT
     const userRoles = await userModel.getUserRoles(user.id);
@@ -188,7 +190,6 @@ app.post('/api/login', async (req, res) => {
 
     const token = jwt.sign(payload, process.env.SECRET_KEY);
     res.json({ token });
-
   } catch (error) {
     console.error("Error al iniciar sesión:", error);
     res.status(500).json({ error: "Error interno del servidor" });
