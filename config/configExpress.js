@@ -19,7 +19,7 @@ module.exports = (app) => {
             directives: {
                 defaultSrc: ["'self'"],
                 scriptSrc: ["'self'", "https://http2.mlstatic.com", "'unsafe-inline'", "'unsafe-eval'"],
-                imgSrc: ["'self'", "data:", "http://localhost:3002", "https://sofiaportafolio.online", "http://localhost:3005"]
+                imgSrc: ["'self'", "data:", "http://localhost:3002", "https://sofiaportafolio.online", "http://localhost:3005", "https://asdasdasd3.onrender.com"]
             },
         })
     );
