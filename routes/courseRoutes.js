@@ -50,6 +50,7 @@ router.put('/cursos/:cursoId/disponibilidades/:disponibilidadId', async (req, re
         res.status(500).send(error.message);
     }
 });
+
 router.get('/cursos/:cursoId/disponibilidades', async (req, res) => {
     const { cursoId } = req.params;
     const { estado, limite } = req.query; // Parámetros opcionales para filtrar por estado y limitar el número de resultados

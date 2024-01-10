@@ -197,7 +197,6 @@ app.post('/api/login', loginValidationRules, async (req, res) => {
 });
 
 
-
 app.use((err, req, res, next) => {
   console.error('Error capturado:', err.message);
   res.status(500).send({ error: err.message });
