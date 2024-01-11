@@ -11,10 +11,10 @@ const { sendEmail } = require('../utils/emailServices'); // Asegúrate de que la
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Aquí debes especificar la carpeta donde se guardarán los comprobantes
+    cb(null, path.join(__dirname, '../db/uploads/')); // Ruta ajustada
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname); // Guarda el archivo con un timestamp para evitar duplicados
+    cb(null, Date.now() + '-' + file.originalname);
   }
 });
 const upload = multer({ storage: storage });
