@@ -56,7 +56,7 @@ router.post('/create_preference', async (req, res) => {
         const preference = {
             items,
             back_urls: {
-                success: '"https://sofiaportafolio.online',
+                success: 'https://sofiaportafolio.online',
                 failure: '"https://sofiaportafolio.online',
                 pending: '"https://sofiaportafolio.online',
             },
