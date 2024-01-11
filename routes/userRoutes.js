@@ -197,7 +197,7 @@ router.post('/forgot-password', async (req, res) => {
 
     const token = jwt.sign({ id: user.id }, process.env.RESET_PASSWORD_KEY, { expiresIn: '20m' });
 
-    const resetLink = `https://sofiaportafolio.online/reset-password/${token}`;
+    const resetLink = `http://localhost:3005/reset-password/${token}`;
     const htmlContent = `<p>Por favor, haz clic en este <a href="${resetLink}">enlace</a> para restablecer tu contraseña.</p>`;
 
     sendEmail({

@@ -105,11 +105,17 @@ router.get('/reservas/todas', async (req, res) => {
 });
 router.delete('/reservas/cursos/:id', async (req, res) => {
     const { id } = req.params;
+    console.log(`Intentando eliminar la reserva con ID: ${id}`); // Log para ver el ID de la reserva que se intenta eliminar
+
     try {
+        console.log(`Ejecutando consulta para eliminar reserva...`);
         await cursoModel.eliminarReserva(id);
+        console.log(`Reserva ${id} eliminada con éxito`);
         res.json({ message: "Reserva eliminada" });
     } catch (error) {
-        res.status(500).send(error.message);
+        console.error(`Error al eliminar la reserva: ${error.message}`);
+        console.error(error); // Log completo del error
+        res.status(500).send(`Error interno del servidor: ${error.message}`);
     }
 });
 router.put('/reservas/cursos/:id/estado', async (req, res) => {

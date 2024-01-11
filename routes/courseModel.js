@@ -125,12 +125,24 @@ exports.actualizarEstadoReserva = async (reservaId, nuevoEstado) => {
 
 exports.eliminarReserva = async (reservaId) => {
     try {
-        const sql = 'DELETE FROM reservas_cursos WHERE id = ?';
-        await query(sql, [reservaId]);
+        // Primero, eliminar las referencias en horarios_reservas
+        const sqlDeleteHorarios = 'DELETE FROM horarios_reservas WHERE reserva_id = ?';
+        console.log(`Ejecutando SQL para eliminar horarios: ${sqlDeleteHorarios} con reservaId = ${reservaId}`);
+        await query(sqlDeleteHorarios, [reservaId]);
+
+        // Luego, eliminar la reserva
+        const sqlDeleteReserva = 'DELETE FROM reservas_cursos WHERE id = ?';
+        console.log(`Ejecutando SQL para eliminar reserva: ${sqlDeleteReserva} con reservaId = ${reservaId}`);
+        await query(sqlDeleteReserva, [reservaId]);
+
+        console.log(`Reserva ${reservaId} y sus horarios asociados eliminados con éxito`);
     } catch (error) {
-        throw new Error("Error al eliminar la reserva");
+        console.error(`Error en la operación de eliminación: ${error}`);
+        throw new Error(`Error al eliminar la reserva: ${error}`);
     }
 };
+
+
 
 exports.obtenerReservasAdminPorCurso = async (cursoId) => {
     try {

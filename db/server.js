@@ -26,7 +26,7 @@ require('dotenv').config();
 const app = express();
 const port = 3002;
 app.use(cors({
-  origin: ['https://sofiaportafolio.online'], // Agrega tu dominio personalizado aquí
+  origin: ['http://localhost:3005'], // Agrega tu dominio personalizado aquí
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
@@ -109,7 +109,7 @@ require('../config/configExpress')(app);
 const server = http.createServer(app);
 const io = require('socket.io')(server, {
   cors: {
-    origin: 'https://sofiaportafolio.online', // De nuevo, permite CORS para Socket.io
+    origin: 'http://localhost:3005', // De nuevo, permite CORS para Socket.io
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
   }
