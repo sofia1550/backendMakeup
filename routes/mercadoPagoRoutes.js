@@ -21,6 +21,7 @@ const updateInventoryAfterApproval = async (orderId, req) => {
 
 
 router.post('/create_preference', async (req, res) => {
+    console.log("Datos recibidos para crear preferencia:", req.body);
 
     const { orden_id, total, datosUsuario, datosEnvio, productos } = req.body;
 
@@ -56,20 +57,22 @@ router.post('/create_preference', async (req, res) => {
         const preference = {
             items,
             back_urls: {
-                success: 'https://www.example.com',
-                failure: 'https://www.example.com',
-                pending: 'https://www.example.com',
+                success: 'https://sofiaportafolio.online',
+                failure: 'https://sofiaportafolio.online',
+                pending: 'https://sofiaportafolio.online',
             },
             auto_return: 'approved',
             external_reference: String(orden_id)
         };
+        console.log("Preferencia a enviar a MercadoPago:", preference);
 
         const response = await mercadopago.preferences.create(preference);
+        console.log("Respuesta de MercadoPago:", response.body);
 
         res.json({ id: response.body.id, init_point: response.body.init_point });
     } catch (error) {
         console.error('Error:', error);
-        console.error("[create_preference] Error:", error);
+        console.error('Error al crear preferencia en MercadoPago:', error);
         res.status(400).json({ error: 'Error procesando la solicitud' });
     }
 });
