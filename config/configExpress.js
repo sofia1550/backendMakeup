@@ -6,7 +6,7 @@ const cors = require('cors');
 module.exports = (app) => {
     app.use(cors({
         origin: ['https://sofiaportafolio.online', 'https://www.mercadopago.com'], // Agrega los dominios permitidos aquí
-        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'], // Asegúrate de permitir todos los métodos necesarios
         credentials: true,
         optionsSuccessStatus: 204
     }));
