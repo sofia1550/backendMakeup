@@ -141,7 +141,7 @@ exports.eliminarReserva = async (reservaId) => {
         throw new Error(`Error al eliminar la reserva: ${error}`);
     }
 };
-
+ 
 
 
 exports.obtenerReservasAdminPorCurso = async (cursoId) => {

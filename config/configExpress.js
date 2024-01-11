@@ -5,7 +5,7 @@ const cors = require('cors');
 
 module.exports = (app) => {
     app.use(cors({
-        origin: ['http://localhost:3005'], // Agrega tu dominio personalizado aquí
+        origin: ['https://sofiaportafolio.online'], // Agrega tu dominio personalizado aquí
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
         credentials: true,
         optionsSuccessStatus: 204
@@ -19,7 +19,7 @@ module.exports = (app) => {
             directives: {
                 defaultSrc: ["'self'"],
                 scriptSrc: ["'self'", "https://http2.mlstatic.com", "'unsafe-inline'", "'unsafe-eval'"],
-                imgSrc: ["'self'", "data:", "http://localhost:3002", "http://localhost:3005", "http://localhost:3005", "https://asdasdasd3.onrender.com"]
+                imgSrc: ["'self'", "data:", "http://localhost:3002", "https://sofiaportafolio.online", "https://sofiaportafolio.online", "https://asdasdasd3.onrender.com"]
             },
         })
     );

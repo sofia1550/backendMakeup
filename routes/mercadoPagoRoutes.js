@@ -56,9 +56,9 @@ router.post('/create_preference', async (req, res) => {
         const preference = {
             items,
             back_urls: {
-                success: '"http://localhost:3005',
-                failure: '"http://localhost:3005',
-                pending: '"http://localhost:3005',
+                success: '"https://sofiaportafolio.online',
+                failure: '"https://sofiaportafolio.online',
+                pending: '"https://sofiaportafolio.online',
             },
             auto_return: 'approved',
             external_reference: String(orden_id)
