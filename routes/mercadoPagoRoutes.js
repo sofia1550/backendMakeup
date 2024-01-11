@@ -57,8 +57,8 @@ router.post('/create_preference', async (req, res) => {
             items,
             back_urls: {
                 success: 'https://sofiaportafolio.online',
-                failure: '"https://sofiaportafolio.online',
-                pending: '"https://sofiaportafolio.online',
+                failure: 'https://sofiaportafolio.online',
+                pending: 'https://sofiaportafolio.online',
             },
             auto_return: 'approved',
             external_reference: String(orden_id)
