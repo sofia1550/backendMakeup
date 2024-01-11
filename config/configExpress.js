@@ -5,7 +5,7 @@ const cors = require('cors');
 
 module.exports = (app) => {
     app.use(cors({
-        origin: ['https://sofiaportafolio.online'], // Agrega tu dominio personalizado aquí
+        origin: ['https://sofiaportafolio.online', 'https://www.mercadopago.com'], // Agrega los dominios permitidos aquí
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
         credentials: true,
         optionsSuccessStatus: 204
