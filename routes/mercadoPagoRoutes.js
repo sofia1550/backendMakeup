@@ -21,6 +21,7 @@ const updateInventoryAfterApproval = async (orderId, req) => {
 
 
 router.post('/create_preference', async (req, res) => {
+    console.log("Datos recibidos para crear preferencia:", req.body);
 
     const { orden_id, total, datosUsuario, datosEnvio, productos } = req.body;
 
@@ -63,16 +64,20 @@ router.post('/create_preference', async (req, res) => {
             auto_return: 'approved',
             external_reference: String(orden_id)
         };
+        console.log("Preferencia a enviar a MercadoPago:", preference);
 
         const response = await mercadopago.preferences.create(preference);
+        console.log("Respuesta de MercadoPago:", response.body);
 
         res.json({ id: response.body.id, init_point: response.body.init_point });
     } catch (error) {
+        console.error('Error:', error);
+        console.error('Error al crear preferencia en MercadoPago:', error);
         res.status(400).json({ error: 'Error procesando la solicitud' });
     }
 });
 const OWNER_EMAIL = 'luciuknicolas15@gmail.com';
-
+ 
 router.post("/notifications", async (req, res) => {
 
 
@@ -91,6 +96,7 @@ router.post("/notifications", async (req, res) => {
             const order = await orderModel.getOrderByReference(externalReference);
 
             if (!order || !order.email) {
+                console.error(`No se encontró una orden con el ID: ${paymentInfo.body.order.id} o la orden no tiene email asociado`);
                 return res.status(400).send("Orden no encontrada o no tiene email asociado");
             }
 
@@ -197,12 +203,15 @@ router.post("/notifications", async (req, res) => {
                     break;
 
                 default:
+                    console.warn(`Estado de pago no manejado: ${paymentInfo.body.status}`);
             }
         } else {
+            console.warn(`[notifications] Tipo de notificación no manejado: ${type}`);
         }
 
         res.status(200).send();
     } catch (error) {
+        console.error("Error al procesar la notificación:", error);
         res.status(500).send("Error interno del servidor");
     }
 });
