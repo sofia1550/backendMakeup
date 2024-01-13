@@ -4,6 +4,8 @@ const router = express.Router();
 const orderModel = require('../models/ordenModel');
 const orderDetailsModel = require('../models/detalleOrdenModel');
 const productModel = require('../productModal/productModal');
+const userModel = require('../models/useModel');
+const jwt = require('jsonwebtoken');
 
 const protectRoute = require('../middlewares/autMiddleware');
 const multer = require('multer');
@@ -11,7 +13,26 @@ const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const { sendEmail } = require('../utils/emailServices');
+const verifyAdminRole = async (req, res, next) => {
+    const token = req.headers.authorization.split(' ')[1]; // Asegúrate de que hay un token
+    if (!token) {
+        return res.status(401).json({ error: 'Acceso no autorizado' });
+    }
 
+    try {
+        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+        const isAdmin = await userModel.checkIfUserIsAdmin(decodedToken.userId);
+
+        if (!isAdmin) {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+
+        next();
+    } catch (error) {
+        console.error(error);
+        return res.status(403).json({ error: 'Acceso denegado' });
+    }
+};
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,

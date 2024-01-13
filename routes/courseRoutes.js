@@ -8,6 +8,7 @@ const { sendEmail } = require('../utils/emailServices'); // Asegúrate de que la
 
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const userModel = require('../models/useModel');
 
 // Configuración de Cloudinary
 cloudinary.config({

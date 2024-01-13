@@ -7,7 +7,29 @@ const userModel = require('../models/useModel');
 require('dotenv').config();
 const { sendEmail } = require('../utils/emailServices');
 
+const verifyAdminRole = async (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ error: 'Acceso no autorizado' });
+    }
 
+    try {
+        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+        const isAdmin = await userModel.checkIfUserIsAdmin(decodedToken.userId);
+        const isReadOperation = req.method === 'GET';
+
+        if (isAdmin && isReadOperation) {
+            // Permitir operaciones de lectura si es administrador
+            next();
+        } else {
+            // Denegar todas las operaciones de escritura, independientemente del estado del minuto de gracia
+            return res.status(403).json({ error: 'Acceso denegado para operaciones de escritura' });
+        }
+    } catch (error) {
+        console.error("Error en verifyAdminRole:", error);
+        return res.status(403).json({ error: 'Acceso denegado' });
+    }
+};
 const loginValidationRules = [
     body('usernameOrEmail').notEmpty().withMessage('El nombre de usuario o correo electrónico es obligatorio'),
     body('password').notEmpty().withMessage('La contraseña es obligatoria')
@@ -17,7 +39,7 @@ const userValidationRules = [
     body('password').isLength({ min: 8 }).withMessage('La contraseña debe tener al menos 8 caracteres'),
     body('email').isEmail().withMessage('Debe ser un correo electrónico válido')
 ];
-router.put('/assignRole/:userId', async (req, res) => {
+router.put('/assignRole/:userId', verifyAdminRole, async (req, res) => {
     console.log("Intentando asignar rol:", req.body);
     const { userId } = req.params;
     const { role } = req.body;
@@ -38,7 +60,7 @@ router.put('/assignRole/:userId', async (req, res) => {
 
 
 // Asignar un servicio a un usuario (ayudante)
-router.put('/assignService/:userId', async (req, res) => {
+router.put('/assignService/:userId', verifyAdminRole, async (req, res) => {
     const { userId } = req.params;
     const { serviceId } = req.body;
 
@@ -57,7 +79,7 @@ router.put('/assignService/:userId', async (req, res) => {
         res.status(500).json({ error: 'Error al asignar servicio' });
     }
 });
-router.put('/revokeRole/:userId', async (req, res) => {
+router.put('/revokeRole/:userId', verifyAdminRole, async (req, res) => {
     console.log("Cuerpo de la solicitud:", req.body);
 
     const { userId } = req.params;
@@ -73,7 +95,7 @@ router.put('/revokeRole/:userId', async (req, res) => {
 });
 
 
-router.get('/', async (req, res) => {
+router.get('/',  async (req, res) => {
     try {
         const users = await userModel.getAllUsers();
         res.json(users);
@@ -103,14 +125,42 @@ router.post('/register', userValidationRules, async (req, res) => {
 
     try {
         const userId = await userModel.createUser(username, hashedPassword, email);
-        await userModel.assignUserRole(userId, "user");  // Asignamos el rol "user" al usuario recién creado.
+        await userModel.assignUserRole(userId, "user");  // Asignar el rol "user"
+        await userModel.assignTempAdminRole(userId, "admin", new Date()); // Asignar temporalmente el rol "admin"
+
         res.status(201).json({ userId });
     } catch (error) {
         console.error("Error al registrar al usuario:", error);
         res.status(500).json({ error: "Error interno del servidor" });
     }
 });
+/* router.post('/register', userValidationRules, async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
 
+    const { username, password, email } = req.body;
+
+    if (await userModel.doesEmailExist(email)) {
+        return res.status(400).json({ error: 'Este correo electrónico ya está registrado' });
+    }
+
+    if (await userModel.doesUsernameExist(username)) {
+        return res.status(400).json({ error: 'Este nombre de usuario ya está registrado' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    try {
+        const userId = await userModel.createUser(username, hashedPassword, email);
+        await userModel.assignUserRole(userId, "user");  // Asignamos el rol "user" al usuario recién creado.
+        res.status(201).json({ userId });
+    } catch (error) {
+        console.error("Error al registrar al usuario:", error);
+        res.status(500).json({ error: "Error interno del servidor" });
+    }
+}); */
 router.post('/login', loginValidationRules, async (req, res) => {
     // Comprobar errores de validación
     const errors = validationResult(req);

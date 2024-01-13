@@ -128,6 +128,17 @@ app.use('/api', fileUploadRoutes);
 app.use('/api/servicios', servicioRoutes);
 app.use('/api', coursesRoutes);
 
+// En tu archivo server.js
+setInterval(async () => {
+  try {
+      const revokedUserIds = await userModel.revokeExpiredAdminRoles();
+      revokedUserIds.forEach(userId => {
+          io.emit('roleRevoked', { userId: userId, roleName: 'admin' });
+      });
+  } catch (error) {
+      console.error("Error al ejecutar la tarea de revocación de roles:", error);
+  }
+}, 60000); // Cada 60 segundos
 
 app.get('/api/create-helper-user', async (req, res) => {
   const saltRounds = 10;

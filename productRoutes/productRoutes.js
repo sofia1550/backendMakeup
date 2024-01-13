@@ -3,9 +3,36 @@ const router = express.Router();
 const productModel = require('../productModal/productModal');
 const multer = require('multer');
 const path = require('path');
+const jwt = require('jsonwebtoken');
+
+const userModel = require('../models/useModel');
+const verifyAdminRole = async (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ error: 'Acceso no autorizado' });
+    }
+
+    try {
+        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+        const isAdmin = await userModel.checkIfUserIsAdmin(decodedToken.userId);
+        const isReadOperation = req.method === 'GET';
+
+        if (isAdmin && isReadOperation) {
+            // Permitir operaciones de lectura si es administrador
+            next();
+        } else {
+            // Denegar todas las operaciones de escritura, independientemente del estado del minuto de gracia
+            return res.status(403).json({ error: 'Acceso denegado para operaciones de escritura' });
+        }
+    } catch (error) {
+        console.error("Error en verifyAdminRole:", error);
+        return res.status(403).json({ error: 'Acceso denegado' });
+    }
+};
+
 // Ruta para actualizar todos los precios por un porcentaje
 // Ruta para actualizar todos los precios por un porcentaje
-router.put('/update-prices', async (req, res) => {
+router.put('/update-prices', verifyAdminRole, async (req, res) => {
     const { percentage } = req.body;
     try {
         await productModel.updateAllPrices(percentage);
@@ -20,7 +47,7 @@ router.put('/update-prices', async (req, res) => {
 
 // Ruta para revertir los precios al último porcentaje aplicado
 // Ruta para revertir los precios al último porcentaje aplicado
-router.put('/revert-last-percentage', async (req, res) => {
+router.put('/revert-last-percentage', verifyAdminRole, async (req, res) => {
     try {
         await productModel.revertLastPercentage();
         const io = req.app.get('io');
@@ -34,7 +61,7 @@ router.put('/revert-last-percentage', async (req, res) => {
 
 
 // Ruta para ajustar los precios al porcentaje anterior
-router.put('/adjust-prices', async (req, res) => {
+router.put('/adjust-prices', verifyAdminRole, async (req, res) => {
     const { previousPercentage } = req.body;
     try {
         await productModel.adjustPricesToPreviousPercentage(previousPercentage);
@@ -46,7 +73,7 @@ router.put('/adjust-prices', async (req, res) => {
 });
 
 // Ruta para revertir y aplicar un nuevo porcentaje
-router.put('/revert-and-apply-percentage', async (req, res) => {
+router.put('/revert-and-apply-percentage', verifyAdminRole, async (req, res) => {
     const { newPercentage } = req.body;
     try {
         await productModel.revertAndApplyNewPercentage(newPercentage);
@@ -83,7 +110,7 @@ router.get('/', async (req, res) => {
 });
 
 // Ruta para crear un nuevo producto
-router.post('/', upload.single('imagen_url'), async (req, res) => {
+router.post('/', upload.single('imagen_url'), verifyAdminRole, async (req, res) => {
     const { nombre, descripcion, precio, stock, marca, color, categoria } = req.body;
     const imagenPath = '/image/' + req.file.filename;
     console.log('Categoria recibida en el servidor:', categoria);
@@ -102,7 +129,7 @@ router.post('/', upload.single('imagen_url'), async (req, res) => {
 
 // Ruta para editar un producto existente
 // Ruta para editar un producto existente
-router.put('/:id', upload.single('imagen'), async (req, res) => {
+router.put('/:id', upload.single('imagen'), verifyAdminRole, async (req, res) => {
     const { id } = req.params;
     const { nombre, descripcion, precio, stock, marca, color, categoria } = req.body;
 
@@ -122,7 +149,7 @@ router.put('/:id', upload.single('imagen'), async (req, res) => {
     }
 });
 
-router.put('/product-detail-update/:id', async (req, res) => {
+router.put('/product-detail-update/:id', verifyAdminRole, async (req, res) => {
     const { id } = req.params;
     const { nombre, descripcion, precio, stock, imagen_url, marca, color, categoria } = req.body;
     console.log("Datos recibidos para la actualización de detalles:", req.body);
@@ -146,7 +173,7 @@ router.put('/product-detail-update/:id', async (req, res) => {
 });
 
 // Ruta para eliminar un producto existente
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', verifyAdminRole, async (req, res) => {
     const { id } = req.params;
     console.log("ID del producto a eliminar:", id);
     try {

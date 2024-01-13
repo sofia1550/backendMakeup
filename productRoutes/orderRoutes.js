@@ -5,7 +5,32 @@ const protectRoute = require('../middlewares/autMiddleware');
 const mercadopago = require('mercadopago');
 const emailService = require('./emailServices');
 const Joi = require('joi');
+const userModel = require('../models/useModel');
+const jwt = require('jsonwebtoken');
 
+const verifyAdminRole = async (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ error: 'Acceso no autorizado' });
+    }
+
+    try {
+        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+        const isAdmin = await userModel.checkIfUserIsAdmin(decodedToken.userId);
+        const isReadOperation = req.method === 'GET';
+
+        if (isAdmin && isReadOperation) {
+            // Permitir operaciones de lectura si es administrador
+            next();
+        } else {
+            // Denegar todas las operaciones de escritura, independientemente del estado del minuto de gracia
+            return res.status(403).json({ error: 'Acceso denegado para operaciones de escritura' });
+        }
+    } catch (error) {
+        console.error("Error en verifyAdminRole:", error);
+        return res.status(403).json({ error: 'Acceso denegado' });
+    }
+};
 const orderSchema = Joi.object({
     usuario_id: Joi.number().required(),
     estado: Joi.string().valid('APPROVED', 'PENDING', 'REJECTED', 'REFUNDED').required(),
@@ -23,7 +48,7 @@ mercadopago.configure({
     access_token: process.env.MERCADOPAGO_ACCESS_TOKEN
 });
 
-router.post('/api/orders', protectRoute(['user', 'admin']), asyncHandler(async (req, res) => {
+router.post('/api/orders', protectRoute(['user', 'admin', "ayudante"]), asyncHandler(async (req, res) => {
     const { error } = orderSchema.validate(req.body);
     if (error) return res.status(400).json({ error: error.details[0].message });
 
@@ -51,7 +76,7 @@ router.get('/api/orders/:id', protectRoute(), asyncHandler(async (req, res) => {
     res.json(order);
 }));
 
-router.put('/api/orders/:id', protectRoute(), asyncHandler(async (req, res) => {
+router.put('/api/orders/:id', protectRoute(), verifyAdminRole, asyncHandler(async (req, res) => {
     const { estado } = req.body;
     const order = await orderModel.getOrderById(req.params.id);
 
@@ -82,7 +107,7 @@ router.get('/api/orders/count', protectRoute(['admin']), asyncHandler(async (req
     res.json({ orderCount });
 }));
 
-router.delete('/api/orders/:id', protectRoute(['admin']), asyncHandler(async (req, res) => {
+router.delete('/api/orders/:id', protectRoute(['admin']), verifyAdminRole, asyncHandler(async (req, res) => {
     const result = await orderModel.deleteOrderById(req.params.id);
 
     if (!result) {
