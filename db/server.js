@@ -97,7 +97,7 @@ app.post('/contact', async (req, res) => {
 
 
 // Servir archivos estáticos de la carpeta 'uploads'
-app.use('/uploads', express.static(path.join(__dirname, 'db/uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../db/uploads')));
 app.use('/image', express.static(path.join(__dirname, '../db/image')));
 
 // Configuración adicional de Express (Helmet, etc.)
