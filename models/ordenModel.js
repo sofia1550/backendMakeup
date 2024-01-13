@@ -22,7 +22,6 @@ exports.getOrdersByStatus = async (status, sortByDate = 'desc') => {
         const results = await query(sql, Array.isArray(status) ? status : [status]);
         return results;
     } catch (error) {
-        console.error("Error al obtener las órdenes por estado:", error);
         throw new Error("Error al obtener las órdenes por estado");
     }
 };
@@ -43,7 +42,6 @@ exports.getOrdersByStatusAndDateRange = async (status, sortByDate = 'desc', star
         const results = await query(sql, params);
         return results;
     } catch (error) {
-        console.error("Error al obtener las órdenes por estado y rango de fechas:", error);
         throw new Error("Error al obtener las órdenes por estado y rango de fechas");
     }
 };
@@ -59,7 +57,6 @@ exports.getAdminOrders = async () => {
         const results = await query(sql);
         return results;
     } catch (error) {
-        console.error("Error al obtener las órdenes para el administrador:", error);
         throw new Error("Error al obtener las órdenes para el administrador");
     }
 };
@@ -70,7 +67,6 @@ exports.createOrderDetails = async (orderId, productoId, cantidad, precio) => {
     try {
         await query(sql, [orderId, productoId, cantidad, precio]);
     } catch (error) {
-        console.error("Error al crear el detalle de la orden:", error);
         handleError("Error al crear el detalle de la orden", error);
     }
 };
@@ -81,7 +77,6 @@ exports.getUserById = async (usuario_id) => {
         const results = await query(sql, [usuario_id]);
         return results[0];
     } catch (error) {
-        console.error("Error al obtener el usuario:", error);
         throw new Error("Error al obtener el usuario");
     }
 };
@@ -97,7 +92,6 @@ exports.createOrder = async (usuario_id, total, nombre, email, telefono) => {
 
         return result.insertId;
     } catch (error) {
-        console.error("Error al crear la orden:", error);
         throw new Error("Error al crear la orden");
     }
 };
@@ -108,7 +102,6 @@ exports.getOrderById = async (id) => {
         const result = await query(sql, [id]);
         return result[0];
     } catch (error) {
-        console.error("Error al obtener la orden:", error);
         throw new Error("Error al obtener la orden");
     }
 };
@@ -120,7 +113,6 @@ exports.getOrdersByUserId = async (usuario_id) => {
         const results = await query(sql, [usuario_id]);
         return results;
     } catch (error) {
-        console.error("Error al obtener las órdenes del usuario:", error);
         throw new Error("Error al obtener las órdenes del usuario");
     }
 };
@@ -131,7 +123,6 @@ exports.updateOrderStatus = async (id, estado) => {
         const result = await query(sql, [estado, id]);
         return result.affectedRows > 0;
     } catch (error) {
-        console.error("Error al actualizar el estado de la orden:", error);
         throw new Error("Error al actualizar el estado de la orden");
     }
 };
@@ -142,7 +133,6 @@ exports.deleteOrderById = async (id) => {
         const result = await query(sql, [id]);
         return result.affectedRows > 0;
     } catch (error) {
-        console.error("Error al eliminar la orden:", error);
         throw new Error("Error al eliminar la orden");
     }
 };
@@ -152,7 +142,6 @@ exports.updateUserData = async (usuario_id, nombre, direccion, telefono) => {
         const result = await query(sql, [nombre, direccion, telefono, usuario_id]);
         return result.affectedRows > 0;
     } catch (error) {
-        console.error("Error al actualizar los datos del usuario:", error);
         throw new Error("Error al actualizar los datos del usuario");
     }
 };
@@ -163,7 +152,6 @@ exports.getOrdersByDateRange = async (startDate, endDate) => {
         const results = await query(sql, [startDate, endDate]);
         return results;
     } catch (error) {
-        console.error("Error al obtener órdenes por rango de fecha:", error);
         throw new Error("Error al obtener órdenes por rango de fecha");
     }
 };
@@ -174,7 +162,6 @@ exports.getTotalSalesByDateRange = async (startDate, endDate) => {
         const results = await query(sql, [startDate, endDate]);
         return results[0].totalSales;
     } catch (error) {
-        console.error("Error al obtener el total de ventas:", error);
         throw new Error("Error al obtener el total de ventas");
     }
 };
@@ -185,7 +172,6 @@ exports.getOrderCountByDateRange = async (startDate, endDate) => {
         const results = await query(sql, [startDate, endDate]);
         return results[0].orderCount;
     } catch (error) {
-        console.error("Error al obtener la cantidad de órdenes:", error);
         throw new Error("Error al obtener la cantidad de órdenes");
     }
 };
@@ -204,7 +190,6 @@ exports.updateOrderTotal = async (orden_id) => {
     try {
         await query(sql, [orden_id, orden_id]);
     } catch (error) {
-        console.error("Error al actualizar el total de la orden:", error);
         throw new Error("Error al actualizar el total de la orden");
     }
 };
@@ -214,7 +199,6 @@ exports.getAllOrders = async () => {
         const results = await query(sql);
         return results;
     } catch (error) {
-        console.error("Error al obtener todas las órdenes:", error);
         throw new Error("Error al obtener todas las órdenes");
     }
 };
@@ -224,7 +208,6 @@ exports.updateShippingInfo = async (orden_id, metodo_envio, direccion, ciudad, e
         const result = await query(sql, [metodo_envio, direccion, ciudad, estado, codigo_postal, pais, orden_id]);
         return result.affectedRows > 0;
     } catch (error) {
-        console.error("Error al actualizar la información de envío:", error);
         throw new Error("Error al actualizar la información de envío");
     }
 };
@@ -244,7 +227,6 @@ exports.getShippingInfoByOrderId = async (orden_id) => {
             throw new Error("No se encontró información de envío para la orden con ID: " + orden_id);
         }
     } catch (error) {
-        console.error("Error al obtener la información de envío:", error);
         throw error;
     }
 };
@@ -255,11 +237,9 @@ exports.updateOrderPaymentReceipt = async (orderId, receiptURL) => {
         if (result.affectedRows > 0) {
             return true;
         } else {
-            console.warn('No se actualizó ninguna fila en la base de datos.');
             return false;
         }
     } catch (error) {
-        console.error("Error al actualizar comprobante de pago de la orden:", error);
         throw error;
     }
 };
@@ -276,7 +256,6 @@ exports.getOrdersByStatus = async (status, sortByDate = 'desc') => {
         const results = await query(sql, [status]);
         return results;
     } catch (error) {
-        console.error("Error al obtener las órdenes por estado:", error);
         throw new Error("Error al obtener las órdenes por estado");
     }
 };
@@ -290,8 +269,7 @@ exports.deleteOrder = async (orderId) => {
 
         await query(deleteOrderSql, [orderId]);
     } catch (error) {
-        
-        console.error("Error al eliminar la orden:", error);
+
         throw new Error("Error al eliminar la orden");
     }
 };
@@ -307,7 +285,6 @@ exports.getOrdersByStatusAndDateRange = async (status, sortByDate = 'desc', star
         const results = await query(sql, [status, startDate, endDate]);
         return results;
     } catch (error) {
-        console.error("Error al obtener las órdenes por estado y rango de fechas:", error);
         throw new Error("Error al obtener las órdenes por estado y rango de fechas");
     }
 };
@@ -317,7 +294,6 @@ exports.getOrderByReference = async (reference) => {
         const result = await query(sql, [reference]);
         return result[0];
     } catch (error) {
-        console.error("Error al obtener la orden por referencia:", error);
         throw new Error("Error al obtener la orden por referencia");
     }
 };

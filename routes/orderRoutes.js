@@ -14,7 +14,7 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const { sendEmail } = require('../utils/emailServices');
 const verifyAdminRole = async (req, res, next) => {
-    const token = req.headers.authorization.split(' ')[1]; // Asegúrate de que hay un token
+    const token = req.headers.authorization.split(' ')[1];
     if (!token) {
         return res.status(401).json({ error: 'Acceso no autorizado' });
     }
@@ -29,7 +29,6 @@ const verifyAdminRole = async (req, res, next) => {
 
         next();
     } catch (error) {
-        console.error(error);
         return res.status(403).json({ error: 'Acceso denegado' });
     }
 };
@@ -157,7 +156,6 @@ router.post('/upload-comprobante/:id', upload.single('comprobante'), async (req,
                         html: emailContentHTML
                     });
                 } else {
-                    console.error('No se encontró la orden o la orden no tiene un email asociado.');
                 }
 
                 // Preparar y enviar correo electrónico al SEO
@@ -182,21 +180,17 @@ router.post('/upload-comprobante/:id', upload.single('comprobante'), async (req,
                     estado: 'Aprobado'
                 });
             } else {
-                console.error('No se pudo actualizar el comprobante en la base de datos.');
                 res.status(500).json({ success: false, message: 'No se pudo actualizar el comprobante en la orden' });
             }
         } catch (error) {
-            console.error("Error en la actualización del comprobante:", error);
             res.status(500).json({ success: false, message: error.message });
         }
     } else {
-        console.error('No se recibió ningún archivo.');
         res.status(400).json({ success: false, message: 'No se pudo subir el archivo' });
     }
 },
     (err, req, res, next) => {
         if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
-            console.error(`El archivo subido excede el tamaño máximo permitido (${err.limit} bytes)`);
             return res.status(400).json({ success: false, message: 'El archivo es demasiado grande. Por favor, sube un archivo que sea menor a 10MB.' });
         }
         next(err);
@@ -223,7 +217,6 @@ router.post('/create', protectRoute(), async (req, res) => {
 
         res.status(201).json({ orderId });
     } catch (error) {
-        console.error('Error detectado:', error);
         res.status(500).json({ error: "Error al crear la orden" });
     }
 });
@@ -258,7 +251,6 @@ router.post('/create/shipping-info', protectRoute(), async (req, res) => {
             res.status(400).json({ success: false, message: "No se encontró una orden con el ID proporcionado o los datos ya están actualizados." });
         }
     } catch (error) {
-        console.error('Error detectado al intentar actualizar datos de envío:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -288,7 +280,6 @@ router.get('/orders-by-status/:status', protectRoute(['admin']), async (req, res
 
         res.json(orders);
     } catch (error) {
-        console.error("Error detected in /orders-by-status/:status:", error);
         res.status(500).json({ error: "Error getting orders by status" });
     }
 });
@@ -324,7 +315,6 @@ router.get('/user-orders', protectRoute(['user', 'admin']), async (req, res) => 
 
         res.json({ user, orders: ordersWithDetails });
     } catch (error) {
-        console.error("Error detectado en /user-orders:", error);
         res.status(500).json({ error: "Error al obtener las órdenes del usuario" });
     }
 });
@@ -337,7 +327,6 @@ router.get('/order-complete-info/:orderId', protectRoute(), async (req, res) => 
 
         res.json({ orderDetails: details, shippingInfo });
     } catch (error) {
-        console.error("Error detectado en /order-complete-info/:orderId:", error);
         res.status(500).json({ error: "Error al obtener la información completa de la orden" });
     }
 });
@@ -350,7 +339,6 @@ router.get('/shipping-info/:orderId', protectRoute(), async (req, res) => {
         const shippingInfo = await orderModel.getShippingInfoByOrderId(orden_id);
         res.json(shippingInfo);
     } catch (error) {
-        console.error("Error detectado en /shipping-info/:orderId:", error);
         res.status(500).json({ error: "Error al obtener la información de envío" });
     }
 });
@@ -368,7 +356,6 @@ router.get('/get-comprobante/:id', async (req, res) => {
             res.status(404).json({ success: false, message: 'No se encontró comprobante para esta orden' });
         }
     } catch (error) {
-        console.error("Error al recuperar el comprobante:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -416,7 +403,6 @@ router.put('/update-status/:id', protectRoute(['admin']), async (req, res) => {
             res.status(400).json({ success: false, message: 'No se pudo actualizar el estado de la orden.' });
         }
     } catch (error) {
-        console.error("Error al actualizar el estado de la orden:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 });

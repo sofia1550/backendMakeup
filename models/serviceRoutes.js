@@ -4,10 +4,10 @@ const servicioModel = require('./serviceModel');
 const protectRoute = require('../middlewares/autMiddleware');
 const usuarioModel = require('./useModel');
 const moment = require('moment');
-const multer = require('multer'); // Asegúrate de instalar este paquete
+const multer = require('multer');
 const fs = require('fs');
-const path = require('path');  // Este es necesario para manejar rutas de archivos de forma segura
-const { sendEmail } = require('../utils/emailServices'); // Asegúrate de que la ruta sea correcta
+const path = require('path');
+const { sendEmail } = require('../utils/emailServices');
 const jwt = require('jsonwebtoken');
 
 const verifyAdminRole = async (req, res, next) => {
@@ -35,7 +35,7 @@ const verifyAdminRole = async (req, res, next) => {
 };
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../db/uploads/')); // Ruta ajustada
+    cb(null, path.join(__dirname, '../db/uploads/'));
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + '-' + file.originalname);
@@ -44,13 +44,11 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 router.get('/:serviceId/images', async (req, res) => {
   try {
-    console.log("Endpoint /:serviceId/images llamado con:", req.params);
 
     const serviceId = req.params.serviceId;
     const images = await servicioModel.getServiceImages(serviceId);
     res.json(images);
   } catch (error) {
-    console.error("Error al obtener las imágenes:", error);
     res.status(500).json({ error: 'Error al obtener las imágenes' });
   }
 });
@@ -77,7 +75,6 @@ router.get('/:serviceId/options', async (req, res) => {
     const options = await servicioModel.getOpcionesServicio(serviceId);
     res.json(options);
   } catch (error) {
-    console.error("Error al obtener las opciones del servicio:", error);
     res.status(500).json({ error: 'Error al obtener las opciones del servicio' });
   }
 });
@@ -90,7 +87,6 @@ router.post('/:serviceId/options', protectRoute(['ayudante', 'admin']), verifyAd
     await servicioModel.addOpcionServicio(serviceId, nombre, precio);
     res.json({ success: true, message: 'Opción agregada con éxito.' });
   } catch (error) {
-    console.error("Error al agregar la opción:", error);
     res.status(500).json({ error: 'Error al agregar la opción' });
   }
 });
@@ -115,7 +111,6 @@ router.put('/options/:optionId', protectRoute(['ayudante', 'admin']), verifyAdmi
     res.json({ success: true, message: 'Opción editada con éxito.', serviceId: serviceId });
 
   } catch (error) {
-    console.error("Error al editar la opción:", error);
     res.status(500).json({ error: 'Error al editar la opción' });
   }
 });
@@ -129,7 +124,6 @@ router.delete('/options/:optionId', protectRoute(['ayudante', 'admin']), verifyA
     await servicioModel.deleteServiceOption(optionId);
     res.json({ success: true, message: 'Opción eliminada con éxito.' });
   } catch (error) {
-    console.error("Error al eliminar la opción:", error);
     res.status(500).json({ error: 'Error al eliminar la opción' });
   }
 });
@@ -146,7 +140,6 @@ router.post('/:serviceId/availabilities/:availabilityId/options', protectRoute([
 
     res.json({ success: true, message: 'Opciones agregadas a la disponibilidad con éxito.' });
   } catch (error) {
-    console.error("Error al agregar opciones a la disponibilidad:", error);
     res.status(500).json({ error: 'Error al agregar opciones a la disponibilidad' });
   }
 });
@@ -158,7 +151,6 @@ router.get('/:serviceId/availabilities/:availabilityId/options', async (req, res
     const options = await servicioModel.getOpcionesForDisponibilidad(availabilityId);
     res.json(options);
   } catch (error) {
-    console.error("Error al obtener opciones de la disponibilidad:", error);
     res.status(500).json({ error: 'Error al obtener opciones de la disponibilidad' });
   }
 });
@@ -171,14 +163,12 @@ router.delete('/:serviceId/availabilities/:availabilityId/options/:optionId', pr
     await servicioModel.removeOpcionFromDisponibilidad(availabilityId, optionId);
     res.json({ success: true, message: 'Opción eliminada de la disponibilidad con éxito.' });
   } catch (error) {
-    console.error("Error al eliminar opción de la disponibilidad:", error);
     res.status(500).json({ error: 'Error al eliminar opción de la disponibilidad' });
   }
 });
 
 router.delete('/:serviceId/deleteImage', verifyAdminRole, async (req, res) => {
   try {
-    console.log("Endpoint /:serviceId/deleteImage llamado con:", req.params, req.body);
 
     const serviceId = req.params.serviceId;
     const { imagePath } = req.body;
@@ -190,21 +180,18 @@ router.delete('/:serviceId/deleteImage', verifyAdminRole, async (req, res) => {
       fs.unlinkSync(absolutePath);
     }
 
-    const io = req.app.get('io');  // Aquí recuperas io
-    console.log("Emitting serviceImagesChanged for serviceId:", req.params.serviceId);
+    const io = req.app.get('io');
 
     io.emit('serviceImagesChanged', { serviceId: req.params.serviceId });
 
     res.json({ success: true, message: 'Imagen eliminada con éxito.' });
   } catch (error) {
-    console.error("Error al eliminar la imagen:", error);
     res.status(500).json({ error: 'Error al eliminar la imagen' });
   }
 });
 
 router.post('/:serviceId/uploadImages', upload.array('images', 5), verifyAdminRole, async (req, res) => {
   try {
-    console.log("Endpoint /:serviceId/uploadImages llamado con:", req.params, req.body, req.files);
 
     const serviceId = req.params.serviceId;
     const imagePaths = req.files.map(file => file.path);
@@ -213,15 +200,13 @@ router.post('/:serviceId/uploadImages', upload.array('images', 5), verifyAdminRo
       await servicioModel.addImagePath(serviceId, path);
     }
 
-    const io = req.app.get('io');  // Aquí recuperas io
-    console.log("Emitting serviceImagesChanged for serviceId:", req.params.serviceId);
+    const io = req.app.get('io');
 
     io.emit('serviceImagesChanged', { serviceId: req.params.serviceId });
 
     // Modificar la respuesta para incluir las rutas de las imágenes
     res.json({ success: true, message: 'Imágenes subidas con éxito.', imagePaths: imagePaths });
   } catch (error) {
-    console.error("Error al subir las imágenes:", error);
     res.status(500).json({ error: 'Error al subir las imágenes' });
   }
 });
@@ -243,7 +228,6 @@ router.put('/:serviceId/socialLinks', protectRoute(['ayudante']), verifyAdminRol
     await servicioModel.updateSocialLinks(serviceId, { facebook_url, whatsapp_url, instagram_url });
     res.json({ success: true, message: 'URLs de redes sociales actualizadas con éxito.' });
   } catch (error) {
-    console.error("Error al actualizar las URLs de redes sociales:", error);
     res.status(500).json({ error: 'Error al actualizar las URLs de redes sociales' });
   }
 });
@@ -266,10 +250,8 @@ router.delete('/:id', verifyAdminRole, (req, res) => {
 });
 router.put('/:id', upload.single('serviceImage'), verifyAdminRole, (req, res) => {
   const { id } = req.params;
-  console.log("ID:", id);
 
   let updateData = {};
-  console.log("Data to update:", updateData);
 
   if (req.file && req.file.path) {
     updateData.image_path = req.file.path;
@@ -302,7 +284,6 @@ router.put('/:id', upload.single('serviceImage'), verifyAdminRole, (req, res) =>
 
 // Aquí es donde se protege el endpoint para que sólo los administradores puedan acceder
 router.put('/:serviceId/assign', protectRoute(['admin']), verifyAdminRole, (req, res) => {
-  console.log("Intentando asignar ayudante a servicio");
 
   const serviceId = req.params.serviceId;
   const { assistantId } = req.body;
@@ -312,7 +293,6 @@ router.put('/:serviceId/assign', protectRoute(['admin']), verifyAdminRole, (req,
 
     // Emitir el evento de WebSocket
     const io = req.app.get('io');
-    console.log("Emitting assistantAssigned event with data:", { serviceId, assistantId });
 
     io.emit('assistantAssigned', { serviceId, assistantId });
 
@@ -323,33 +303,24 @@ router.put('/:serviceId/toggleColor', protectRoute(['ayudante', 'admin']), verif
   const serviceId = req.params.serviceId;
   const userId = req.user.usuario_id;
 
-  console.log("Inicio de la función toggleColor");
-  console.log("Service ID:", serviceId);
-  console.log("User ID:", userId);
+
 
   try {
-    console.log("Intentando obtener los servicios del usuario ayudante");
     const assignedServices = await usuarioModel.getAssignedServices(userId);
     const isAssignedToService = assignedServices.some(service => service.id === parseInt(serviceId));
 
     if (!isAssignedToService) {
-      console.log("Permiso denegado");
       return res.status(403).json({ message: 'No tienes permiso para hacer esto.' });
     }
 
-    console.log("Intentando obtener el servicio");
     const service = await servicioModel.getById(serviceId);
-    console.log("Servicio obtenido:", service);
 
-    console.log("Intentando cambiar el color");
     const newColor = service.color === 'green' ? 'red' : 'green';
     await servicioModel.updateColor(serviceId, newColor);
-    console.log("Color actualizado a:", newColor);
 
     res.json({ success: true, color: newColor });
 
   } catch (error) {
-    console.error("Error en toggleColor:", error);
     res.status(500).json({ error: 'Error al cambiar el color' });
   }
 });
@@ -358,7 +329,7 @@ router.put('/:serviceId/toggleColor', protectRoute(['ayudante', 'admin']), verif
 
 router.put('/:serviceId/removeAssistant', protectRoute(['admin']), verifyAdminRole, (req, res) => {
   const serviceId = req.params.serviceId;
-  const { assistantId } = req.body;  // Asegúrate de que estés pasando assistantId en el cuerpo de la petición
+  const { assistantId } = req.body;
 
   servicioModel.removeAssistant(serviceId, assistantId, (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -376,7 +347,6 @@ router.get('/:serviceId/assignedHelpers', protectRoute(['admin']), (req, res) =>
 
   servicioModel.getAssignedHelpers(serviceId, (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
-    console.log("Ayudantes asignados:", results);
     res.json(results);
   });
 });
@@ -402,20 +372,12 @@ router.post('/:serviceId/addAvailability', protectRoute(['ayudante']), verifyAdm
   const formattedFechaInicio = moment(fechaInicio).format('YYYY-MM-DD HH:mm:ss');
   const formattedFechaFin = moment(fechaFin).format('YYYY-MM-DD HH:mm:ss');
 
-  console.log("Service ID:", serviceId);
-  console.log("User ID:", userId);
-  console.log("Original Fecha Inicio:", fechaInicio);
-  console.log("Formatted Fecha Inicio:", formattedFechaInicio);
-  console.log("Original Fecha Fin:", fechaFin);
-  console.log("Formatted Fecha Fin:", formattedFechaFin);
-  console.log("Estado:", estado);
+
 
   try {
     const assignedServices = await usuarioModel.getAssignedServices(userId);
-    console.log("Assigned Services:", assignedServices);
 
     const isAssignedToService = assignedServices.some(service => service.id === parseInt(serviceId));
-    console.log("Is assigned to service:", isAssignedToService);
 
     if (!isAssignedToService) {
       return res.status(403).json({ message: 'No tienes permiso para agregar disponibilidades para este servicio.' });
@@ -423,13 +385,11 @@ router.post('/:serviceId/addAvailability', protectRoute(['ayudante']), verifyAdm
 
     servicioModel.addAvailability(userId, serviceId, formattedFechaInicio, formattedFechaFin, estado, (err, results) => {
       if (err) {
-        console.error("Error in addAvailability:", err.message);
         return res.status(500).json({ error: err.message });
       }
       res.json({ success: true, message: "Disponibilidad agregada correctamente." });
     });
   } catch (error) {
-    console.error("Error catch:", error);
     res.status(500).json({ error: 'Error al agregar disponibilidad' });
   }
 });
@@ -442,13 +402,11 @@ router.get('/:serviceId/availabilities', protectRoute(['ayudante', 'user']), asy
     const availabilities = await servicioModel.getAvailabilitiesForService(serviceId);
     res.json(availabilities);
   } catch (error) {
-    console.error("Error al obtener las disponibilidades:", error);
     res.status(500).json({ error: 'Error al obtener las disponibilidades' });
   }
 });
 
 
-// routes.js
 
 router.get('/:serviceId/isUserAssigned', protectRoute(['ayudante', 'user']), async (req, res) => {
   const serviceId = req.params.serviceId;
@@ -458,7 +416,6 @@ router.get('/:serviceId/isUserAssigned', protectRoute(['ayudante', 'user']), asy
     const isAssigned = await servicioModel.isUserAssignedToService(userId, serviceId);
     res.json({ isAssigned });
   } catch (error) {
-    console.error("Error al verificar la asignación:", error);
     res.status(500).json({ error: 'Error al verificar la asignación' });
   }
 });
@@ -495,7 +452,6 @@ router.post('/:serviceId/reserve/:availabilityId', protectRoute(['user', 'admin'
     res.json({ success: true, message: "Disponibilidad reservada con éxito. Esperando confirmación." });
 
   } catch (error) {
-    console.error("Error al reservar la disponibilidad:", error);
     res.status(500).json({ error: 'Error al reservar la disponibilidad' });
   }
 });
@@ -505,7 +461,6 @@ router.post('/reservations/:reservaId/complete', protectRoute(['user', 'admin', 
     await servicioModel.completeReservation(req.params.reservaId);
     res.json({ success: true, message: 'Reserva completada con éxito.' });
   } catch (error) {
-    console.error("Error al completar la reserva:", error);
     res.status(500).json({ error: 'Error al completar la reserva' });
   }
 });
@@ -513,12 +468,9 @@ router.post('/reservations/:reservaId/complete', protectRoute(['user', 'admin', 
 router.get('/:serviceId/reservasPorAyudante/:ayudanteId', async (req, res) => {
   try {
     const { serviceId, ayudanteId } = req.params;
-    console.log("serviceId:", serviceId, "ayudanteId:", ayudanteId);  // Añadir este log
     const reservas = await servicioModel.getReservasPorAyudanteYServicio(serviceId, ayudanteId);
-    console.log("Reservas:", reservas);  // Añadir este log
     res.json(reservas);
   } catch (error) {
-    console.error("Error al obtener las reservas por ayudante y servicio:", error);
     res.status(500).json({ error: 'Error al obtener las reservas por ayudante y servicio' });
   }
 });
@@ -529,7 +481,6 @@ router.put('/reservas/:id/completar', verifyAdminRole, async (req, res) => {
     await servicioModel.marcarReservaComoCompletada(id);
     res.status(200).send({ message: 'Reserva completada con éxito.' });
   } catch (error) {
-    console.error("Error al marcar la reserva como completada:", error);
     res.status(500).send({ error: error.message });
   }
 });
@@ -539,7 +490,6 @@ router.put('/reservas/:id/pendiente', verifyAdminRole, async (req, res) => {
     await servicioModel.marcarReservaComoPendiente(id);
     res.status(200).send({ message: 'Reserva marcada como pendiente con éxito.' });
   } catch (error) {
-    console.error("Error al marcar la reserva como pendiente:", error);
     res.status(500).send({ error: error.message });
   }
 });
@@ -555,7 +505,6 @@ router.delete('/reservas/:id', verifyAdminRole, async (req, res) => {
 });
 // Endpoint para subir el comprobante
 router.post('/:serviceId/availabilities/:disponibilidadId/uploadProof', protectRoute(['user', 'admin', 'ayudante']), upload.single('comprobante'), async (req, res) => {
-  console.log("Body en el endpoint:", req.body); // <-- Añade este log
 
   try {
 
@@ -625,7 +574,6 @@ router.post('/:serviceId/availabilities/:disponibilidadId/uploadProof', protectR
 
     res.json({ success: true, message: 'Comprobante subido con éxito.' });
   } catch (error) {
-    console.error("Error al subir el comprobante:", error);
     res.status(500).json({ error: 'Error al subir el comprobante' });
   }
 });
@@ -633,12 +581,9 @@ router.post('/:serviceId/availabilities/:disponibilidadId/uploadProof', protectR
 router.get('/reservasPorUsuario/:usuarioId', async (req, res) => {
   try {
     const { usuarioId } = req.params;
-    console.log("Usuario ID recibido:", usuarioId);
     const reservas = await servicioModel.getReservasPorUsuario(usuarioId);
-    console.log("Reservas enviadas:", reservas);
     res.json(reservas);
   } catch (error) {
-    console.error("Error al obtener las reservas por usuario:", error);
     res.status(500).json({ error: 'Error al obtener las reservas por usuario' });
   }
 });
@@ -666,7 +611,6 @@ router.get('/reservas/cierreCaja', protectRoute(['admin']), async (req, res) => 
       detallesPendientes: resumen.detallesPendientes
     });
   } catch (error) {
-    console.error("Error en cierre de caja:", error);
     res.status(500).json({ error: 'Error al realizar el cierre de caja' });
   }
 });

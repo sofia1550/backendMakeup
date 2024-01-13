@@ -6,7 +6,6 @@ exports.actualizarEstadoDisponibilidad = async (cursoId, disponibilidadId, nuevo
         const sqlUpdateDisponibilidad = 'UPDATE disponibilidades_cursos SET estado = ? WHERE curso_id = ? AND id = ?';
         await query(sqlUpdateDisponibilidad, [nuevoEstado, cursoId, disponibilidadId]);
     } catch (error) {
-        console.error("Error al actualizar el estado de la disponibilidad:", error);
         throw new Error("Error al actualizar el estado de la disponibilidad");
     }
 };
@@ -29,7 +28,6 @@ exports.obtenerDisponibilidades = async (cursoId, estado, limite) => {
         const results = await query(sqlQuery, params);
         return results;
     } catch (error) {
-        console.error("Error al obtener disponibilidades:", error);
         throw new Error("Error al obtener disponibilidades");
     }
 };
@@ -63,7 +61,6 @@ exports.agregarReservaConDatos = async (disponibilidadId, usuarioId, estado, nom
 
         return { message: 'Reserva agregada con éxito', id: reservaId };
     } catch (error) {
-        console.error("Error al agregar reserva:", error);
         throw new Error(error.message);
     }
 };
@@ -73,7 +70,6 @@ exports.getReservasActuales = async (disponibilidadId) => {
         const [result] = await query(sql, [disponibilidadId]);
         return result.total;
     } catch (error) {
-        console.error("Error al obtener reservas actuales:", error);
         throw new Error("Error al obtener reservas actuales");
     }
 };
@@ -83,7 +79,6 @@ exports.actualizarRutaComprobante = async (reservaId, rutaComprobante) => {
         const sql = 'UPDATE reservas_cursos SET url_comprobante = ? WHERE id = ?';
         await query(sql, [rutaComprobante, reservaId]);
     } catch (error) {
-        console.error("Error al actualizar la ruta del comprobante:", error);
         throw new Error("Error al actualizar la ruta del comprobante");
     }
 };
@@ -108,7 +103,6 @@ exports.obtenerTodasLasReservas = async () => {
 
         return reservas;
     } catch (error) {
-        console.error("Error al obtener todas las reservas:", error);
         throw new Error("Error al obtener todas las reservas");
     }
 };
@@ -127,21 +121,17 @@ exports.eliminarReserva = async (reservaId) => {
     try {
         // Primero, eliminar las referencias en horarios_reservas
         const sqlDeleteHorarios = 'DELETE FROM horarios_reservas WHERE reserva_id = ?';
-        console.log(`Ejecutando SQL para eliminar horarios: ${sqlDeleteHorarios} con reservaId = ${reservaId}`);
         await query(sqlDeleteHorarios, [reservaId]);
 
         // Luego, eliminar la reserva
         const sqlDeleteReserva = 'DELETE FROM reservas_cursos WHERE id = ?';
-        console.log(`Ejecutando SQL para eliminar reserva: ${sqlDeleteReserva} con reservaId = ${reservaId}`);
         await query(sqlDeleteReserva, [reservaId]);
 
-        console.log(`Reserva ${reservaId} y sus horarios asociados eliminados con éxito`);
     } catch (error) {
-        console.error(`Error en la operación de eliminación: ${error}`);
         throw new Error(`Error al eliminar la reserva: ${error}`);
     }
 };
- 
+
 
 
 exports.obtenerReservasAdminPorCurso = async (cursoId) => {
@@ -163,7 +153,6 @@ exports.obtenerReservasAdminPorCurso = async (cursoId) => {
 
         return reservas;
     } catch (error) {
-        console.error("Error al obtener reservas para admin:", error);
         throw new Error("Error al obtener reservas para admin");
     }
 };
@@ -189,7 +178,6 @@ exports.obtenerReservasPorUsuario = async (usuarioId) => {
 
         return reservas;
     } catch (error) {
-        console.error("Error al obtener reservas para el usuario:", error);
         throw new Error("Error al obtener reservas para el usuario");
     }
 };
@@ -198,22 +186,16 @@ exports.obtenerReservasPorUsuario = async (usuarioId) => {
 
 exports.agregarHorarioDisponibilidad = async (disponibilidadId, horarios) => {
     try {
-        console.log("Agregando horarios para disponibilidad ID:", disponibilidadId, "Horarios:", horarios);
 
         for (let horario of horarios) {
-            // Ajusta los nombres de las propiedades aquí
             const { dia_semana, hora_inicio, hora_fin } = horario;
-            console.log("Valores a insertar:", dia_semana, hora_inicio, hora_fin);
 
             const sql = 'INSERT INTO horarios_disponibilidades (disponibilidad_id, dia_semana, hora_inicio, hora_fin) VALUES (?, ?, ?, ?)';
             await query(sql, [disponibilidadId, dia_semana, hora_inicio, hora_fin]);
         }
-        console.log("Horarios agregados con éxito para disponibilidad ID:", disponibilidadId);
 
-        console.log("Horarios agregados con éxito");
         return { message: 'Horarios agregados con éxito' };
     } catch (error) {
-        console.error("Error al agregar horarios:", error);
         throw new Error("Error al agregar horarios");
     }
 };
@@ -221,20 +203,15 @@ exports.agregarHorarioDisponibilidad = async (disponibilidadId, horarios) => {
 
 
 // Agregar disponibilidad a un curso
-// Agregar disponibilidad a un curso
-// En tu modelo (courseModel.js o similar)
 exports.agregarDisponibilidad = async (cursoId, fechaInicio, fechaFin, maxReservas) => {
-    console.log("Intentando agregar disponibilidad en la base de datos:", { cursoId, fechaInicio, fechaFin, maxReservas }); // Nuevo log
 
     try {
         const sql = 'INSERT INTO disponibilidades_cursos (curso_id, fecha_inicio, fecha_fin, max_reservas) VALUES (?, ?, ?, ?)';
         const result = await query(sql, [cursoId, fechaInicio, fechaFin, maxReservas]);
         const nuevaDisponibilidadId = result.insertId;
-        console.log("Disponibilidad agregada con éxito, ID:", nuevaDisponibilidadId); // Nuevo log
 
         return { id: nuevaDisponibilidadId, curso_id: cursoId, fecha_inicio: fechaInicio, fecha_fin: fechaFin, max_reservas: maxReservas };
     } catch (error) {
-        console.error("Error al agregar disponibilidad en la base de datos:", error); // Nuevo log
         throw new Error("Error al agregar disponibilidad");
     }
 };
@@ -242,7 +219,6 @@ exports.agregarDisponibilidad = async (cursoId, fechaInicio, fechaFin, maxReserv
 
 // Obtener disponibilidades de un curso
 exports.getDisponibilidadesByCursoId = async (cursoId) => {
-    console.log("Obteniendo disponibilidades para el curso ID:", cursoId);
 
     try {
         const sqlDisponibilidades = 'SELECT * FROM disponibilidades_cursos WHERE curso_id = ?';
@@ -259,7 +235,6 @@ exports.getDisponibilidadesByCursoId = async (cursoId) => {
 
         return disponibilidades;
     } catch (error) {
-        console.error("Error al obtener disponibilidades:", error);
         throw new Error("Error al obtener disponibilidades");
     }
 };
@@ -286,7 +261,6 @@ exports.agregarReserva = async (disponibilidadId, usuarioId, estado, horarios) =
 
         return { message: 'Reservas agregadas con éxito' };
     } catch (error) {
-        console.error("Error al agregar reservas:", error);
         throw new Error("Error al agregar reservas");
     }
 };
@@ -306,7 +280,6 @@ exports.getAllCursos = async () => {
         const cursos = await query(sql);
         return cursos;
     } catch (error) {
-        console.error("Error al obtener todos los cursos:", error);
         throw new Error("Error al obtener todos los cursos");
     }
 };
@@ -317,7 +290,6 @@ exports.getCursoById = async (cursoId) => {
         const curso = await query(sql, [cursoId]);
         return curso[0]; // Retorna el primer curso encontrado
     } catch (error) {
-        console.error("Error al obtener el curso por ID:", error);
         throw new Error("Error al obtener el curso por ID");
     }
 };
@@ -327,7 +299,6 @@ exports.getClasesByCursoId = async (cursoId) => {
         const clases = await query(sql, [cursoId]);
         return clases;
     } catch (error) {
-        console.error("Error al obtener clases por ID de curso:", error);
         throw new Error("Error al obtener clases por ID de curso");
     }
 };
@@ -337,7 +308,6 @@ exports.getImagenesByCursoId = async (cursoId) => {
         const imagenes = await query(sql, [cursoId]);
         return imagenes;
     } catch (error) {
-        console.error("Error al obtener imágenes por ID de curso:", error);
         throw new Error("Error al obtener imágenes por ID de curso");
     }
 };
@@ -373,7 +343,6 @@ exports.getCursoCompletoById = async (cursoId) => {
             imagenes: imagenes
         };
     } catch (error) {
-        console.error("Error al obtener información completa del curso:", error);
         throw new Error("Error al obtener información completa del curso");
     }
 };
@@ -382,7 +351,6 @@ exports.eliminarImagenCurso = async (imagenId) => {
         const sql = 'DELETE FROM imagenes_curso WHERE id = ?';
         await query(sql, [imagenId]);
     } catch (error) {
-        console.error("Error al eliminar imagen del curso:", error);
         throw new Error("Error al eliminar imagen del curso");
     }
 };
@@ -392,7 +360,6 @@ exports.agregarImagenCurso = async (cursoId, imagenPath) => {
         await query(sql, [cursoId, imagenPath]);
         return { message: 'Imagen agregada con éxito' };
     } catch (error) {
-        console.error("Error al agregar imagen al curso:", error);
         throw new Error("Error al agregar imagen al curso");
     }
 };
@@ -402,7 +369,6 @@ exports.getImagenesByCursoId = async (cursoId) => {
         const imagenes = await query(sql, [cursoId]);
         return imagenes;
     } catch (error) {
-        console.error("Error al obtener imágenes por ID de curso:", error);
         throw new Error("Error al obtener imágenes por ID de curso");
     }
 };
@@ -412,7 +378,6 @@ exports.actualizarPrecioCurso = async (cursoId, nuevoPrecio) => {
         await query(sql, [nuevoPrecio, cursoId]);
         return { message: 'Precio actualizado con éxito' };
     } catch (error) {
-        console.error("Error al actualizar el precio del curso:", error);
         throw new Error("Error al actualizar el precio del curso");
     }
 };

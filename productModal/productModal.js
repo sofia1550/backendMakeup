@@ -6,7 +6,6 @@ exports.updateProductStock = async (id, newStock) => {
     return new Promise((resolve, reject) => {
         db.query(sql, [newStock, id], (err, result) => {
             if (err) {
-                console.error("Error al actualizar el stock del producto:", err);
                 return reject(new Error("Error al actualizar el stock del producto"));
             }
             resolve(result.affectedRows > 0);
@@ -19,7 +18,6 @@ exports.updateAllPrices = async (percentage) => {
     return new Promise((resolve, reject) => {
         db.query(updatePricesSql, [percentage, percentage], (err, result) => {
             if (err) {
-                console.error("Error al actualizar los precios:", err);
                 return reject(new Error("Error al actualizar los precios"));
             }
             resolve(result.affectedRows > 0);
@@ -32,7 +30,6 @@ exports.revertLastPercentage = async () => {
     return new Promise((resolve, reject) => {
         db.query(revertSql, (err, result) => {
             if (err) {
-                console.error("Error al revertir los precios:", err);
                 return reject(new Error("Error al revertir los precios"));
             }
             resolve(result.affectedRows > 0);
@@ -45,7 +42,6 @@ exports.adjustPricesToPreviousPercentage = async (previousPercentage) => {
     return new Promise((resolve, reject) => {
         db.query(adjustSql, [previousPercentage, previousPercentage], (err, result) => {
             if (err) {
-                console.error("Error al ajustar los precios:", err);
                 return reject(new Error("Error al ajustar los precios"));
             }
             resolve(result.affectedRows > 0);
@@ -64,14 +60,12 @@ exports.revertAndApplyNewPercentage = async (newPercentage) => {
         // Primero revertimos los precios
         db.query(revertSql, async (err, revertResult) => {
             if (err) {
-                console.error("Error al revertir los precios:", err);
                 return reject(new Error("Error al revertir los precios"));
             }
 
             // Luego aplicamos el nuevo porcentaje
             db.query(applyNewPercentageSql, [newPercentage, newPercentage], (err, applyResult) => {
                 if (err) {
-                    console.error("Error al aplicar el nuevo porcentaje:", err);
                     return reject(new Error("Error al aplicar el nuevo porcentaje"));
                 }
                 resolve(applyResult.affectedRows > 0);
@@ -81,13 +75,11 @@ exports.revertAndApplyNewPercentage = async (newPercentage) => {
 };
 
 exports.createProduct = async (nombre, descripcion, precio, stock, imagenPath, marca, color, color_stock, categoria) => {
-    console.log('Valores a insertar en la base de datos:', { nombre, descripcion, precio, stock, imagenPath, marca, color, categoria });
 
     const sql = 'INSERT INTO productos (nombre, descripcion, precio, stock, imagen_url, marca, color, color_stock, categoria) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
     return new Promise((resolve, reject) => {
         db.query(sql, [nombre, descripcion, precio, stock, imagenPath, marca, color, JSON.stringify(color_stock), categoria], (err, result) => {
             if (err) {
-                console.error("Error al crear el producto:", err);
                 return reject(new Error("Error al crear el producto"));
             }
             resolve(result.insertId);
@@ -100,7 +92,6 @@ exports.getAllProducts = async () => {
     return new Promise((resolve, reject) => {
         db.query(sql, (err, products) => {
             if (err) {
-                console.error("Error al obtener los productos:", err);
                 return reject(new Error("Error al obtener los productos"));
             }
             resolve(products);
@@ -113,7 +104,6 @@ exports.getProductById = async (id) => {
     return new Promise((resolve, reject) => {
         db.query(sql, [id], (err, product) => {
             if (err) {
-                console.error("Error al obtener el producto:", err);
                 return reject(new Error("Error al obtener el producto"));
             }
             resolve(product[0]);
@@ -129,12 +119,10 @@ exports.updateProduct = async (id, nombre, descripcion, precio, stock, imagenPat
     const values = imagenPath
         ? [nombre, descripcion, precio, stock, imagenPath, marca, color, categoria, id]
         : [nombre, descripcion, precio, stock, marca, color, categoria, id];
-    console.log("Valores para la consulta SQL:", [nombre, descripcion, precio, stock, imagenPath, marca, color, categoria, id]);
 
     return new Promise((resolve, reject) => {
         db.query(sql, values, async (err, result) => {
             if (err) {
-                console.error("Error al actualizar el producto:", err);
                 return reject(new Error("Error al actualizar el producto"));
             }
             resolve(result.affectedRows > 0);
@@ -145,33 +133,19 @@ exports.updateProduct = async (id, nombre, descripcion, precio, stock, imagenPat
 
 // Asumo que tienes una función getProductById, si no la tienes, puedes usar el que proporcionaste anteriormente.
 exports.updateProductDetail = async (id, nombre, descripcion, precio, stock, imagen_url, marca, color, categoria) => {
-    console.log("Valores que se pasarán a la consulta SQL para actualizar detalles:", [nombre, descripcion, precio, stock, imagen_url, marca, color, categoria, id]);
 
     const sql = 'UPDATE productos SET nombre = ?, descripcion = ?, precio = ?, stock = ?, imagen_url = ?, marca = ?, color = ?, categoria = ? WHERE id = ?';
 
-    // Log antes de actualizar
-    console.log("Valores antes de actualizar detalles:", {
-        nombre,
-        descripcion,
-        precio,
-        stock,
-        imagen_url,
-        marca,
-        color,
-        categoria,
-        id
-    });
+
 
     return new Promise((resolve, reject) => {
         db.query(sql, [nombre, descripcion, precio, stock, imagen_url, marca, color, categoria, id], async (err, result) => {
             if (err) {
-                console.error("Error al actualizar los detalles del producto:", err);
                 return reject(new Error("Error al actualizar los detalles del producto"));
             }
 
             // Log después de actualizar
             const updatedProductDetail = await exports.getProductById(id);
-            console.log("Detalles del producto después de actualizar:", updatedProductDetail);
 
             resolve(result.affectedRows > 0);
         });
@@ -184,7 +158,6 @@ exports.deleteProduct = async (id) => {
     return new Promise((resolve, reject) => {
         db.query(sql, [id], (err, result) => {
             if (err) {
-                console.error("Error al eliminar el producto:", err);
                 return reject(new Error("Error al eliminar el producto"));
             }
             resolve(result.affectedRows > 0);
@@ -200,7 +173,6 @@ exports.updateProductStock = async (id, newStock) => {
     return new Promise((resolve, reject) => {
         db.query(sql, [newStock, id], (err, result) => {
             if (err) {
-                console.error("Error al actualizar el stock del producto:", err);
                 return reject(new Error("Error al actualizar el stock del producto"));
             }
             resolve(result.affectedRows > 0);

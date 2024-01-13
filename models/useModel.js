@@ -2,9 +2,8 @@ const mysql = require('mysql');
 const util = require('util');
 require('dotenv').config();
 const bcrypt = require('bcrypt');
-const pool = require('../db/db'); // Asegúrate de que la ruta sea correcta
+const pool = require('../db/db');
 
-// Convierte pool.query en una función que devuelve promesas
 const query = util.promisify(pool.query).bind(pool);
 
 exports.getById = (userId) => {
@@ -18,7 +17,6 @@ exports.findUserByEmail = async (email) => {
         const result = await query(sql, [email]);
         return result[0];
     } catch (error) {
-        console.error("Error al buscar el usuario por email:", error);
         throw new Error("Error al buscar el usuario por email");
     }
 };
@@ -29,7 +27,6 @@ exports.updateUserPassword = async (userId, newPassword) => {
     try {
         await query(sql, [hashedPassword, userId]);
     } catch (error) {
-        console.error("Error al actualizar la contraseña del usuario:", error);
         throw new Error("Error al actualizar la contraseña del usuario");
     }
 };
@@ -45,7 +42,6 @@ exports.getAssignedServices = async (userId) => {
         const services = await query(queryStr, [userId]);
         return services;
     } catch (error) {
-        console.error("Error al obtener los servicios asignados al usuario:", error);
         throw new Error("Error al obtener los servicios asignados al usuario");
     }
 };
@@ -64,7 +60,6 @@ exports.getAllUsers = async () => {
         const users = await query(sql);
         return users;
     } catch (error) {
-        console.error("Error al obtener los usuarios:", error);
         throw new Error("Error al obtener los usuarios");
     }
 };
@@ -80,7 +75,6 @@ exports.revokeRole = async (userId, roleName) => {
         const deleteRoleSql = 'DELETE FROM usuario_roles WHERE usuario_id = ? AND role_id = ?';
         await query(deleteRoleSql, [userId, roleId]);
     } catch (error) {
-        console.error("Error al revocar el rol al usuario:", error);
         throw new Error("Error al revocar el rol al usuario");
     }
 };
@@ -91,7 +85,6 @@ exports.createUser = async (username, hashedPassword, email) => {
         const result = await query(sql, [username, hashedPassword, email]);
         return result.insertId;
     } catch (error) {
-        console.error("Error al crear el usuario:", error);
         throw new Error("Error al crear el usuario");
     }
 };
@@ -102,7 +95,6 @@ exports.findUserByUsernameOrEmail = async (usernameOrEmail) => {
         const results = await query(sql, [usernameOrEmail, usernameOrEmail]);
         return results[0];
     } catch (error) {
-        console.error("Error al buscar el usuario:", error);
         throw new Error("Error al buscar el usuario");
     }
 };
@@ -113,7 +105,6 @@ exports.doesUsernameExist = async (username) => {
         const result = await query(sql, [username]);
         return result.length > 0;
     } catch (error) {
-        console.error("Error al comprobar el nombre de usuario:", error);
         throw new Error("Error al comprobar el nombre de usuario");
     }
 };
@@ -124,7 +115,6 @@ exports.findUserByUsername = async (username) => {
         const result = await query(sql, [username]);
         return result[0];
     } catch (error) {
-        console.error("Error al buscar el usuario:", error);
         throw new Error("Error al buscar el usuario");
     }
 };
@@ -141,7 +131,6 @@ exports.getAllHelpers = async () => {
         const helpers = await query(sql);
         return helpers;
     } catch (error) {
-        console.error("Error al obtener ayudantes:", error);
         throw new Error("Error al obtener ayudantes");
     }
 };
@@ -152,7 +141,6 @@ exports.doesEmailExist = async (email) => {
         const result = await query(sql, [email]);
         return result.length > 0;
     } catch (error) {
-        console.error("Error al comprobar el correo electrónico:", error);
         throw new Error("Error al comprobar el correo electrónico");
     }
 };
@@ -176,7 +164,6 @@ exports.assignRole = async (userId, roleName) => {
         `;
         await query(sql, [userId, roleName]);
     } catch (error) {
-        console.error("Error al asignar rol al usuario:", error);
         throw new Error("Error al asignar rol al usuario");
     }
 };
@@ -187,7 +174,6 @@ exports.findUserById = async (userId) => {
         const result = await query(sql, [userId]);
         return result[0];
     } catch (error) {
-        console.error("Error al buscar el usuario por ID:", error);
         throw new Error("Error al buscar el usuario por ID");
     }
 };
@@ -203,7 +189,6 @@ exports.getUserRoles = async (userId) => {
         const roles = await query(sql, [userId]);
         return roles.map(roleObj => roleObj.name); // Convertir a un array de nombres de roles
     } catch (error) {
-        console.error("Error al obtener roles del usuario:", error);
         throw new Error("Error al obtener roles del usuario");
     }
 };
@@ -218,7 +203,6 @@ exports.assignUserRole = async (userId, roleName) => {
     try {
         await query(sql, [userId, roleName]);
     } catch (error) {
-        console.error("Error al asignar rol al usuario:", error);
         throw new Error("Error al asignar rol al usuario");
     }
 };
@@ -256,12 +240,10 @@ exports.revokeExpiredAdminRoles = async () => {
         const revokedUserIds = [];
         for (const user of usersToRevoke) {
             await exports.revokeRole(user.usuario_id, 'admin');
-            console.log(`Rol de administrador revocado para el usuario con ID: ${user.usuario_id}`);
             revokedUserIds.push(user.usuario_id);
         }
         return revokedUserIds;
     } catch (error) {
-        console.error("Error al revocar roles expirados:", error);
         throw error; // Lanzar el error para manejarlo en la ruta
     }
 };
@@ -279,7 +261,7 @@ exports.checkIfUserIsAdmin = async (userId) => {
         JOIN roles r ON ur.role_id = r.id
         WHERE ur.usuario_id = ? AND r.name = 'admin'
     `;
-    
+
     try {
         const result = await query(sql, [userId]);
 
@@ -291,7 +273,6 @@ exports.checkIfUserIsAdmin = async (userId) => {
         // Devuelve true si el usuario es administrador, de lo contrario false
         return result[0].isAdmin > 0;
     } catch (error) {
-        console.error("Error al verificar si el usuario es administrador:", error);
 
         // Lanza un error específico para que el middleware pueda manejarlo adecuadamente
         throw new Error("Error al verificar si el usuario es administrador");

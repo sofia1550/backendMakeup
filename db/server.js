@@ -13,7 +13,7 @@ const productRoutes = require('../productRoutes/productRoutes');
 const protectRoute = require('../middlewares/autMiddleware');
 const fileUploadRoutes = require("../models/comprobantes/fileUpload");
 const coursesRoutes = require("../routes/courseRoutes");
-const { sendEmail } = require('../utils/emailServices'); // Asegúrate de que la ruta sea correcta
+const { sendEmail } = require('../utils/emailServices'); 
 const { body, validationResult } = require('express-validator');
 
 
@@ -26,7 +26,7 @@ require('dotenv').config();
 const app = express();
 const port = 3002;
 app.use(cors({
-  origin: ['https://sofiaportafolio.online'], // Agrega tu dominio personalizado aquí
+  origin: ['https://sofiaportafolio.online'], 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
@@ -91,12 +91,10 @@ app.post('/contact', async (req, res) => {
 
     res.json({ message: 'Mensaje enviado con éxito' });
   } catch (error) {
-    console.error('Error al enviar los mensajes:', error);
     res.status(500).json({ error: 'Error al enviar el mensaje' });
   }
 });
 
-// Configuración de CORS (eliminando la configuración duplicada)
 
 // Servir archivos estáticos de la carpeta 'uploads'
 app.use('/uploads', express.static(path.join(__dirname, 'db/uploads')));
@@ -109,7 +107,7 @@ require('../config/configExpress')(app);
 const server = http.createServer(app);
 const io = require('socket.io')(server, {
   cors: {
-    origin: 'https://sofiaportafolio.online', // De nuevo, permite CORS para Socket.io
+    origin: 'https://sofiaportafolio.online', 
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
   }
@@ -128,7 +126,6 @@ app.use('/api', fileUploadRoutes);
 app.use('/api/servicios', servicioRoutes);
 app.use('/api', coursesRoutes);
 
-// En tu archivo server.js
 setInterval(async () => {
   try {
       const revokedUserIds = await userModel.revokeExpiredAdminRoles();
@@ -157,7 +154,6 @@ app.get('/api/create-helper-user', async (req, res) => {
     const result = await userModel.createUser(username, hashedPassword, email, "ayudante");
     res.json({ success: true, message: 'Usuario ayudante creado', userId: result });
   } catch (error) {
-    console.error("Error al crear el usuario ayudante:", error);
     res.status(500).json({ error: 'Error al crear el usuario ayudante' });
   }
 });
@@ -202,14 +198,12 @@ app.post('/api/login', loginValidationRules, async (req, res) => {
     const token = jwt.sign(payload, process.env.SECRET_KEY);
     res.json({ token });
   } catch (error) {
-    console.error("Error al iniciar sesión:", error);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
 
 app.use((err, req, res, next) => {
-  console.error('Error capturado:', err.message);
   res.status(500).send({ error: err.message });
 });
 app.post('/api/admin/products', protectRoute(['admin']), (req, res) => {
@@ -225,7 +219,6 @@ app.use('/api/protected-route', protectRoute(), (req, res) => {
 });
 
 app.post('/api/validateToken', (req, res) => {
-  console.log("Token recibido:", req.body.token);
 
   const { token } = req.body;
 
@@ -237,7 +230,6 @@ app.post('/api/validateToken', (req, res) => {
     const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
     res.json({ isValid: true, userData: decodedToken });
   } catch (error) {
-    console.error("Error obteniendo el rol del usuario:", error.response.data);
     res.json({ isValid: false });
   }
 });
@@ -246,7 +238,6 @@ var connection;
 
 
 app.use((err, req, res, next) => {
-  console.error("Error global:", err.stack);
   res.status(500).json({ error: 'Error interno del servidor' });
 });
 

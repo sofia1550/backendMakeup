@@ -26,7 +26,6 @@ const verifyAdminRole = async (req, res, next) => {
             return res.status(403).json({ error: 'Acceso denegado para operaciones de escritura' });
         }
     } catch (error) {
-        console.error("Error en verifyAdminRole:", error);
         return res.status(403).json({ error: 'Acceso denegado' });
     }
 };
@@ -40,14 +39,12 @@ const userValidationRules = [
     body('email').isEmail().withMessage('Debe ser un correo electrónico válido')
 ];
 router.put('/assignRole/:userId', verifyAdminRole, async (req, res) => {
-    console.log("Intentando asignar rol:", req.body);
     const { userId } = req.params;
     const { role } = req.body;
     try {
         await userModel.assignRole(userId, role);
         res.json({ message: 'Rol asignado exitosamente' });
     } catch (error) {
-        console.error("Error en assignRole:", error.message);
 
         // Aquí verificamos el mensaje del error y respondemos adecuadamente
         if (error.message === "El usuario ya tiene este rol asignado") {
@@ -75,21 +72,17 @@ router.put('/assignService/:userId', verifyAdminRole, async (req, res) => {
         await userModel.assignService(userId, serviceId);
         res.json({ message: 'Servicio asignado exitosamente' });
     } catch (error) {
-        console.error(error);
         res.status(500).json({ error: 'Error al asignar servicio' });
     }
 });
 router.put('/revokeRole/:userId', verifyAdminRole, async (req, res) => {
-    console.log("Cuerpo de la solicitud:", req.body);
 
     const { userId } = req.params;
     const { role } = req.body;
-    console.log("Role recibido:", role);
     try {
         await userModel.revokeRole(userId, role);
         res.json({ message: 'Rol revocado exitosamente' });
     } catch (error) {
-        console.error("Detalles del error:", error);
         res.status(500).json({ error: 'Error al revocar el rol', details: error.message });
     }
 });
@@ -100,7 +93,6 @@ router.get('/',  async (req, res) => {
         const users = await userModel.getAllUsers();
         res.json(users);
     } catch (error) {
-        console.error("Error al obtener los usuarios:", error);
         res.status(500).json({ message: "Error al obtener los usuarios" });
     }
 });
@@ -134,6 +126,8 @@ router.post('/register', userValidationRules, async (req, res) => {
         res.status(500).json({ error: "Error interno del servidor" });
     }
 });
+
+/* backupFunction sin minuto de gracia otorgando admin */
 /* router.post('/register', userValidationRules, async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -195,7 +189,6 @@ router.post('/login', loginValidationRules, async (req, res) => {
         // Enviar el token como respuesta
         res.json({ token });
     } catch (error) {
-        console.error("Error al iniciar sesión:", error);
         res.status(500).json({ error: "Error interno del servidor" });
     }
 });
@@ -205,7 +198,6 @@ router.get('/role/ayudante', async (req, res) => {
         const helpers = await userModel.getAllHelpers();
         res.json(helpers);
     } catch (error) {
-        console.error("Error al obtener los ayudantes:", error);
         res.status(500).json({ message: "Error al obtener los ayudantes" });
     }
 });
@@ -232,14 +224,13 @@ router.get('/current', async (req, res) => {
 
         res.json(user);
     } catch (error) {
-        console.error("Error al obtener el usuario actual:", error);
         res.status(500).json({ error: "Error interno del servidor" });
     }
 });
 
 router.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
-    const user = await userModel.findUserByEmail(email); // Asegúrate de tener esta función en tu modelo de usuario
+    const user = await userModel.findUserByEmail(email); 
 
     if (!user) {
         return res.status(404).send('Usuario no encontrado');
@@ -257,7 +248,6 @@ router.post('/forgot-password', async (req, res) => {
     }).then(() => {
         res.send('Correo de restablecimiento enviado');
     }).catch(error => {
-        console.error('Error al enviar correo:', error);
         res.status(500).send('Error al enviar el correo');
     });
 });

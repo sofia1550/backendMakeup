@@ -10,8 +10,7 @@ exports.getAll = (callback) => {
 exports.update = (id, data, callback) => {
     const queryStr = 'UPDATE servicios SET ? WHERE id = ?';
     db.query(queryStr, [data, id], callback);
-    console.log("Executing query:", queryStr);
-    console.log("With values:", [data, id]);
+
 };
 exports.removeOpcionFromDisponibilidad = async (disponibilidadId, opcionId) => {
     const queryStr = 'DELETE FROM disponibilidades_opciones WHERE disponibilidad_id = ? AND opcion_id = ?';
@@ -58,17 +57,14 @@ exports.getOpcionesForDisponibilidad = async (disponibilidadId) => {
     return await query(queryStr, [disponibilidadId]);
 };
 exports.deleteServiceImage = async (serviceId, imagePath) => {
-    console.log("Model - deleteServiceImage llamado con:", serviceId, imagePath);
     const queryStr = 'DELETE FROM service_images WHERE service_id = ? AND image_path = ?';
     await query(queryStr, [serviceId, imagePath]);
 };
 exports.addImagePath = async (serviceId, imagePath) => {
-    console.log("Model - addImagePath llamado con:", serviceId, imagePath);
     const queryStr = 'INSERT INTO service_images (service_id, image_path) VALUES (?, ?)';
     await query(queryStr, [serviceId, imagePath]);
 };
 exports.getServiceImages = async (serviceId) => {
-    console.log("Model - getServiceImages llamado con:", serviceId);
     const queryStr = 'SELECT image_path FROM service_images WHERE service_id = ?';
     const results = await query(queryStr, [serviceId]);
     return results.map(row => row.image_path);
@@ -124,12 +120,9 @@ exports.getAssignedHelpers = (serviceId, callback) => {
 exports.addAvailability = (userId, serviceId, fechaInicio, fechaFin, estado, callback) => {
     const queryStr = 'INSERT INTO disponibilidades (usuario_id, service_id, fecha_inicio, fecha_fin, estado) VALUES (?, ?, ?, ?, ?)';
 
-    console.log("Executing query:", queryStr);
-    console.log("With values:", [userId, serviceId, fechaInicio, fechaFin, estado]);
 
     db.query(queryStr, [userId, serviceId, fechaInicio, fechaFin, estado], (err, results) => {
         if (err) {
-            console.error("Error in DB query:", err.message);
         }
         callback(err, results);
     });
@@ -187,13 +180,10 @@ exports.completeReservation = async (reservaId) => {
     }
 };
 exports.uploadProof = async (usuarioId, disponibilidadId, comprobantePath, precio, parsedOptionNames) => {
-    console.log("parsedOptionNames en función:", parsedOptionNames); // <-- Añade este log
     try {
         // Verificamos si la disponibilidad puede ser reservada
         const canBeReserved = await exports.canReserve(disponibilidadId);
-        console.log("Valor de canBeReserved:", canBeReserved);
         if (!canBeReserved) {
-            console.warn("La disponibilidad ya ha sido reservada o no se encontró.");
             throw new Error("La disponibilidad ya ha sido reservada o no se encontró.");
         }
 
@@ -222,13 +212,10 @@ exports.uploadProof = async (usuarioId, disponibilidadId, comprobantePath, preci
 exports.canReserve = async (disponibilidadId) => {
     const queryStr = 'SELECT estado FROM disponibilidades WHERE id = ?';
     const results = await query(queryStr, [disponibilidadId]);
-    console.log("Resultado completo de la consulta:", results);
     if (!results || !results[0]) {
-        console.warn("No se encontró la disponibilidad con ID:", disponibilidadId);
         return false;
     }
     const estadoActual = results[0].estado.trim();
-    console.log("Estado de la disponibilidad (sin espacios):", estadoActual);
 
     // Asegúrate de que el estado no sea "reservado"
     return estadoActual !== 'reservado';
@@ -253,7 +240,6 @@ exports.obtenerReservasPorAyudante = async (req, res) => {
         const reservas = await serviceModel.getReservasPorAyudante(ayudanteId);
         res.json(reservas);
     } catch (error) {
-        console.error("Error al obtener el historial de reservas:", error);
         res.status(500).json({ error: 'Error al obtener el historial de reservas' });
     }
 };
@@ -267,7 +253,6 @@ exports.getReservasPorUsuario = async (usuarioId) => {
     
     `;
     const reservas = await query(queryStr, [usuarioId]);
-    console.log("Reservas obtenidas de la DB para usuarioId", usuarioId, ":", reservas);
     return reservas;
 };
 exports.marcarReservaComoCompletada = async (reservaId) => {
@@ -315,9 +300,6 @@ exports.getResumenReservas = async (fechaInicio, fechaFin) => {
         };
     });
 
-    // Logs para verificar las URLs
-    console.log("URL original del comprobante de la primera reserva:", detalles[0]?.comprobante_path);
-    console.log("URL corregida del comprobante de la primera reserva:", detallesAjustados[0]?.comprobante_path);
 
     // Agrupar las reservas por estado para contar y sumar los precios
     const resumen = detallesAjustados.reduce((acc, reserva) => {
