@@ -11,7 +11,7 @@ const { sendEmail } = require('../utils/emailServices');
 const jwt = require('jsonwebtoken');
 
 const verifyAdminRole = async (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
+/*   const token = req.headers.authorization?.split(' ')[1];
   if (!token) {
     return res.status(401).json({ error: 'Acceso no autorizado' });
   }
@@ -31,7 +31,7 @@ const verifyAdminRole = async (req, res, next) => {
   } catch (error) {
     console.error("Error en verifyAdminRole:", error);
     return res.status(403).json({ error: 'Acceso denegado' });
-  }
+  } */
 };
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
