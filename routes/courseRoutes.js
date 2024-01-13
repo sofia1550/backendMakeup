@@ -5,10 +5,37 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const { sendEmail } = require('../utils/emailServices'); // Asegúrate de que la ruta sea correcta
+const jwt = require('jsonwebtoken');
 
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const userModel = require('../models/useModel');
+const verifyAdminRole = async (req, res, next) => {
+    // Verifica si el encabezado de autorización existe y tiene el formato correcto
+    if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Acceso no autorizado' });
+    }
+
+    // Extrae el token del encabezado
+    const token = req.headers.authorization.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ error: 'Token no encontrado' });
+    }
+
+    try {
+        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+        const isAdmin = await userModel.checkIfUserIsAdmin(decodedToken.userId);
+
+        if (!isAdmin) {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+
+        next();
+    } catch (error) {
+        console.error(error);
+        return res.status(403).json({ error: 'Acceso denegado' });
+    }
+};
 
 // Configuración de Cloudinary
 cloudinary.config({
@@ -39,7 +66,7 @@ const storagee = new CloudinaryStorage({
 
 const uploadd = multer({ storage: storagee });
 // Ruta para eliminar una disponibilidad de un curso
-router.put('/cursos/:cursoId/disponibilidades/:disponibilidadId', async (req, res) => {
+router.put('/cursos/:cursoId/disponibilidades/:disponibilidadId', verifyAdminRole, async (req, res) => {
     const { cursoId, disponibilidadId } = req.params;
     const { nuevoEstado } = req.body; // Por ejemplo: "inactiva" o "finalizada"
 
@@ -104,7 +131,7 @@ router.get('/reservas/todas', async (req, res) => {
         res.status(500).send(error.message);
     }
 });
-router.delete('/reservas/cursos/:id', async (req, res) => {
+router.delete('/reservas/cursos/:id', verifyAdminRole, async (req, res) => {
     const { id } = req.params;
     console.log(`Intentando eliminar la reserva con ID: ${id}`); // Log para ver el ID de la reserva que se intenta eliminar
 
@@ -119,7 +146,7 @@ router.delete('/reservas/cursos/:id', async (req, res) => {
         res.status(500).send(`Error interno del servidor: ${error.message}`);
     }
 });
-router.put('/reservas/cursos/:id/estado', async (req, res) => {
+router.put('/reservas/cursos/:id/estado', verifyAdminRole, async (req, res) => {
     const { id } = req.params;
     const { estado } = req.body;
     try {
@@ -129,7 +156,7 @@ router.put('/reservas/cursos/:id/estado', async (req, res) => {
         res.status(500).send(error.message);
     }
 });
-router.put('/cursos/:id/precio', async (req, res) => {
+router.put('/cursos/:id/precio', verifyAdminRole, async (req, res) => {
     try {
         const cursoId = req.params.id;
         const { precio } = req.body;
@@ -147,7 +174,7 @@ router.put('/cursos/:id/precio', async (req, res) => {
 });
 // Ruta para agregar una disponibilidad a un curso
 // Ruta para agregar una disponibilidad a un curso
-router.post('/cursos/:id/disponibilidades', async (req, res) => {
+router.post('/cursos/:id/disponibilidades', verifyAdminRole, async (req, res) => {
     console.log("Solicitud recibida para agregar disponibilidad. Curso ID:", req.params.id, "Cuerpo de la solicitud:", req.body);
     try {
         const { fecha_inicio, fecha_fin, max_reservas } = req.body;
@@ -266,7 +293,7 @@ router.get('/cursos/usuarios/:usuarioId/reservas', async (req, res) => {
 });
 
 // Ruta para agregar horarios a una disponibilidad específica
-router.post('/disponibilidades/:id/horarios', async (req, res) => {
+router.post('/disponibilidades/:id/horarios', verifyAdminRole, async (req, res) => {
     try {
         const disponibilidadId = req.params.id;
         const horarios = req.body.horarios;
