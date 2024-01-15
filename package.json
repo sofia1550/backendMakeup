@@ -40,7 +40,8 @@
     "passport-instagram-token": "^2.3.0",
     "pg": "^8.11.3",
     "sequelize": "^6.32.1",
-    "socket.io": "^4.7.2"
+    "socket.io": "^4.7.2",
+    "uuid": "^9.0.1"
   },
   "description": ""
 }
