@@ -9,9 +9,8 @@ const fs = require('fs');
 const path = require('path');
 const { sendEmail } = require('../utils/emailServices');
 const jwt = require('jsonwebtoken');
-const { v4: uuidv4 } = require('uuid');
 
-/* const verifyAdminRole = async (req, res, next) => {
+const verifyAdminRole = async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) {
     return res.status(401).json({ error: 'Acceso no autorizado' });
@@ -33,32 +32,27 @@ const { v4: uuidv4 } = require('uuid');
     console.error("Error en verifyAdminRole:", error);
     return res.status(403).json({ error: 'Acceso denegado' });
   }
-}; */
-
-
+};
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, '../db/uploads/'));
   },
   filename: (req, file, cb) => {
-    const fileExt = path.extname(file.originalname);
-    cb(null, uuidv4() + fileExt); // UUID como nombre de archivo
+    cb(null, Date.now() + '-' + file.originalname);
   }
 });
-
 const upload = multer({ storage: storage });
-
 router.get('/:serviceId/images', async (req, res) => {
   try {
-
     const serviceId = req.params.serviceId;
     const images = await servicioModel.getServiceImages(serviceId);
     res.json(images);
   } catch (error) {
+    console.error("Error while fetching images:", error);
     res.status(500).json({ error: 'Error al obtener las imágenes' });
   }
 });
-router.post('/', upload.single('serviceImage'), (req, res) => {
+router.post('/', upload.single('serviceImage'), verifyAdminRole, (req, res) => {
   const { icon_name, title, description, facebook_url, whatsapp_url, instagram_url } = req.body;
   const imagePath = req.file.path;
   servicioModel.create({
@@ -86,7 +80,7 @@ router.get('/:serviceId/options', async (req, res) => {
 });
 
 // Agregar una nueva opción a un servicio
-router.post('/:serviceId/options', protectRoute(['ayudante', 'admin']), async (req, res) => {
+router.post('/:serviceId/options', protectRoute(['ayudante', 'admin']), verifyAdminRole, async (req, res) => {
   try {
     const serviceId = req.params.serviceId;
     const { nombre, precio } = req.body;
@@ -99,7 +93,7 @@ router.post('/:serviceId/options', protectRoute(['ayudante', 'admin']), async (r
 
 // Editar una opción existente
 // Editar una opción existente
-router.put('/options/:optionId', protectRoute(['ayudante', 'admin']), async (req, res) => {
+router.put('/options/:optionId', protectRoute(['ayudante', 'admin']), verifyAdminRole, async (req, res) => {
   try {
     const optionId = req.params.optionId;
     const dataToUpdate = {
@@ -124,7 +118,7 @@ router.put('/options/:optionId', protectRoute(['ayudante', 'admin']), async (req
 
 
 // Eliminar una opción
-router.delete('/options/:optionId', protectRoute(['ayudante', 'admin']), async (req, res) => {
+router.delete('/options/:optionId', protectRoute(['ayudante', 'admin']), verifyAdminRole, async (req, res) => {
   try {
     const optionId = req.params.optionId;
     await servicioModel.deleteServiceOption(optionId);
@@ -135,7 +129,7 @@ router.delete('/options/:optionId', protectRoute(['ayudante', 'admin']), async (
 });
 
 // Agregar opciones seleccionadas a una disponibilidad
-router.post('/:serviceId/availabilities/:availabilityId/options', protectRoute(['user', 'ayudante', 'admin']), async (req, res) => {
+router.post('/:serviceId/availabilities/:availabilityId/options', protectRoute(['user', 'ayudante', 'admin']), verifyAdminRole, async (req, res) => {
   try {
     const availabilityId = req.params.availabilityId;
     const selectedOptions = req.body.selectedOptions; // Esto es un array de objetos con {opcionId, precio}
@@ -162,7 +156,7 @@ router.get('/:serviceId/availabilities/:availabilityId/options', async (req, res
 });
 
 // Eliminar una opción seleccionada de una disponibilidad
-router.delete('/:serviceId/availabilities/:availabilityId/options/:optionId', protectRoute(['user', 'ayudante', 'admin']), async (req, res) => {
+router.delete('/:serviceId/availabilities/:availabilityId/options/:optionId', protectRoute(['user', 'ayudante', 'admin']), verifyAdminRole, async (req, res) => {
   try {
     const availabilityId = req.params.availabilityId;
     const optionId = req.params.optionId;
@@ -175,7 +169,6 @@ router.delete('/:serviceId/availabilities/:availabilityId/options/:optionId', pr
 
 router.delete('/:serviceId/deleteImage', async (req, res) => {
   try {
-
     const serviceId = req.params.serviceId;
     const { imagePath } = req.body;
 
@@ -184,19 +177,19 @@ router.delete('/:serviceId/deleteImage', async (req, res) => {
     const absolutePath = path.join(__dirname, '..', 'db', 'uploads', path.basename(imagePath));
     if (fs.existsSync(absolutePath)) {
       fs.unlinkSync(absolutePath);
+      console.log(`Image deleted from file system: ${absolutePath}`);
     }
 
-    const io = req.app.get('io');
-
-    io.emit('serviceImagesChanged', { serviceId: req.params.serviceId });
-
-    res.json({ success: true, message: 'Imagen eliminada con éxito.' });
+    const updatedImages = await servicioModel.getServiceImages(serviceId);
+    res.json({ success: true, message: 'Imagen eliminada con éxito.', images: updatedImages });
   } catch (error) {
+    console.error("Error deleting image:", error);
     res.status(500).json({ error: 'Error al eliminar la imagen' });
   }
 });
 
-router.post('/:serviceId/uploadImages', upload.array('images', 5), async (req, res) => {
+
+router.post('/:serviceId/uploadImages', upload.array('images', 5), verifyAdminRole, async (req, res) => {
   try {
 
     const serviceId = req.params.serviceId;
@@ -218,7 +211,7 @@ router.post('/:serviceId/uploadImages', upload.array('images', 5), async (req, r
 });
 
 
-router.put('/:serviceId/socialLinks', protectRoute(['ayudante']), async (req, res) => {
+router.put('/:serviceId/socialLinks', protectRoute(['ayudante']), verifyAdminRole, async (req, res) => {
   const { serviceId } = req.params;
   const { facebook_url, whatsapp_url, instagram_url } = req.body;
   const userId = req.user.usuario_id;
@@ -247,14 +240,14 @@ router.get('/', (req, res) => {
     res.json(results);
   });
 });
-router.delete('/:id', (req, res) => {
+router.delete('/:id', verifyAdminRole, (req, res) => {
   const { id } = req.params;
   servicioModel.delete(id, (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: `Servicio con id=${id} eliminado correctamente.` });
   });
 });
-router.put('/:id', upload.single('serviceImage'), (req, res) => {
+router.put('/:id', upload.single('serviceImage'), verifyAdminRole, (req, res) => {
   const { id } = req.params;
 
   let updateData = {};
@@ -289,7 +282,7 @@ router.put('/:id', upload.single('serviceImage'), (req, res) => {
 
 
 // Aquí es donde se protege el endpoint para que sólo los administradores puedan acceder
-router.put('/:serviceId/assign', protectRoute(['admin']), (req, res) => {
+router.put('/:serviceId/assign', protectRoute(['admin']), verifyAdminRole, (req, res) => {
 
   const serviceId = req.params.serviceId;
   const { assistantId } = req.body;
@@ -305,7 +298,7 @@ router.put('/:serviceId/assign', protectRoute(['admin']), (req, res) => {
     res.json({ success: true, message: "Ayudante asignado correctamente." });
   });
 });
-router.put('/:serviceId/toggleColor', protectRoute(['ayudante', 'admin']), async (req, res) => {
+router.put('/:serviceId/toggleColor', protectRoute(['ayudante', 'admin']), verifyAdminRole, async (req, res) => {
   const serviceId = req.params.serviceId;
   const userId = req.user.usuario_id;
 
@@ -333,7 +326,7 @@ router.put('/:serviceId/toggleColor', protectRoute(['ayudante', 'admin']), async
 
 
 
-router.put('/:serviceId/removeAssistant', protectRoute(['admin']), (req, res) => {
+router.put('/:serviceId/removeAssistant', protectRoute(['admin']), verifyAdminRole, (req, res) => {
   const serviceId = req.params.serviceId;
   const { assistantId } = req.body;
 
@@ -356,7 +349,7 @@ router.get('/:serviceId/assignedHelpers', protectRoute(['admin']), (req, res) =>
     res.json(results);
   });
 });
-router.put('/revokeRole/:userId', async (req, res) => {
+router.put('/revokeRole/:userId', verifyAdminRole, async (req, res) => {
   const { userId } = req.params;
   const { role } = req.body;
   try {
@@ -369,7 +362,7 @@ router.put('/revokeRole/:userId', async (req, res) => {
 
 
 
-router.post('/:serviceId/addAvailability', protectRoute(['ayudante']), async (req, res) => {
+router.post('/:serviceId/addAvailability', protectRoute(['ayudante']), verifyAdminRole, async (req, res) => {
   const serviceId = req.params.serviceId;
   const userId = req.user.usuario_id;
   const { fechaInicio, fechaFin, estado } = req.body;
@@ -426,7 +419,7 @@ router.get('/:serviceId/isUserAssigned', protectRoute(['ayudante', 'user']), asy
   }
 });
 
-router.delete('/availability/:availabilityId', protectRoute(['ayudante', 'admin']), (req, res) => {
+router.delete('/availability/:availabilityId', protectRoute(['ayudante', 'admin']), verifyAdminRole, (req, res) => {
   const availabilityId = req.params.availabilityId;
 
   servicioModel.deleteAvailability(availabilityId, (err, results) => {
@@ -481,7 +474,7 @@ router.get('/:serviceId/reservasPorAyudante/:ayudanteId', async (req, res) => {
   }
 });
 // Actualizar el estado de una reserva a completado
-router.put('/reservas/:id/completar', async (req, res) => {
+router.put('/reservas/:id/completar', verifyAdminRole, async (req, res) => {
   try {
     const { id } = req.params;
     await servicioModel.marcarReservaComoCompletada(id);
@@ -490,7 +483,7 @@ router.put('/reservas/:id/completar', async (req, res) => {
     res.status(500).send({ error: error.message });
   }
 });
-router.put('/reservas/:id/pendiente', async (req, res) => {
+router.put('/reservas/:id/pendiente', verifyAdminRole, async (req, res) => {
   try {
     const { id } = req.params;
     await servicioModel.marcarReservaComoPendiente(id);
@@ -500,7 +493,7 @@ router.put('/reservas/:id/pendiente', async (req, res) => {
   }
 });
 
-router.delete('/reservas/:id', async (req, res) => {
+router.delete('/reservas/:id', verifyAdminRole, async (req, res) => {
   try {
     const { id } = req.params;
     const response = await servicioModel.deleteReservationById(id);

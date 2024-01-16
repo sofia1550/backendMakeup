@@ -2,6 +2,8 @@ const mysql = require('mysql');
 const util = require('util');
 require('dotenv').config();
 const db = require('../db/db');
+const path = require('path');
+
 const query = util.promisify(db.query).bind(db);
 exports.getAll = (callback) => {
     const queryStr = 'SELECT * FROM servicios';
@@ -57,18 +59,31 @@ exports.getOpcionesForDisponibilidad = async (disponibilidadId) => {
     return await query(queryStr, [disponibilidadId]);
 };
 exports.deleteServiceImage = async (serviceId, imagePath) => {
-    const queryStr = 'DELETE FROM service_images WHERE service_id = ? AND image_path = ?';
-    await query(queryStr, [serviceId, imagePath]);
+    const queryStr = `DELETE FROM service_images WHERE service_id = ${serviceId} AND image_path = '${imagePath}'`;
+    console.log("Executing query:", queryStr);
+    const result = await query(queryStr);
+    console.log(`${result.affectedRows} rows deleted`);
 };
+
+
+
 exports.addImagePath = async (serviceId, imagePath) => {
+    const filename = path.basename(imagePath);
     const queryStr = 'INSERT INTO service_images (service_id, image_path) VALUES (?, ?)';
-    await query(queryStr, [serviceId, imagePath]);
+    await query(queryStr, [serviceId, filename]);
 };
+
 exports.getServiceImages = async (serviceId) => {
     const queryStr = 'SELECT image_path FROM service_images WHERE service_id = ?';
     const results = await query(queryStr, [serviceId]);
-    return results.map(row => row.image_path);
+    const imagePaths = results.map(row => path.basename(row.image_path));
+    console.log("Actual images in DB:", imagePaths); // Agrega este log para depuración
+    return imagePaths;
 };
+
+
+
+
 exports.updateSocialLinks = async (serviceId, socialLinks) => {
     const queryStr = 'UPDATE servicios SET ? WHERE id = ?';
     await query(queryStr, [socialLinks, serviceId]);
