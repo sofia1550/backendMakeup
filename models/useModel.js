@@ -250,31 +250,33 @@ exports.revokeExpiredAdminRoles = async () => {
 
 
 exports.checkIfUserIsAdmin = async (userId) => {
-    // Comprueba si el userId es válido y no nulo
     if (!userId) {
         throw new Error("Se proporcionó un ID de usuario inválido");
     }
 
+    const ONE_MINUTE_IN_SECONDS = 60; // 1 minuto en segundos
+    const now = new Date();
+
     const sql = `
-        SELECT COUNT(*) as isAdmin
+        SELECT COUNT(*) as isAdmin, ur.is_temporary, (TIMESTAMPDIFF(SECOND, ur.assigned_at, ?) <= ?) as isWithinGracePeriod
         FROM usuario_roles ur
         JOIN roles r ON ur.role_id = r.id
         WHERE ur.usuario_id = ? AND r.name = 'admin'
     `;
 
     try {
-        const result = await query(sql, [userId]);
+        const result = await query(sql, [now, ONE_MINUTE_IN_SECONDS, userId]);
 
-        // Comprueba si el resultado de la consulta es válido
         if (!result || result.length === 0) {
             throw new Error("Error al verificar el rol de administrador");
         }
 
-        // Devuelve true si el usuario es administrador, de lo contrario false
-        return result[0].isAdmin > 0;
+        const userIsAdmin = result[0].isAdmin > 0;
+        const isTemporary = result[0].is_temporary;
+        const withinGracePeriod = result[0].isWithinGracePeriod;
+        
+        return { isAdmin: userIsAdmin, isTemporary: isTemporary, isWithinGracePeriod: withinGracePeriod };
     } catch (error) {
-
-        // Lanza un error específico para que el middleware pueda manejarlo adecuadamente
         throw new Error("Error al verificar si el usuario es administrador");
     }
 };

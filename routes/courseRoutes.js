@@ -11,30 +11,31 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const userModel = require('../models/useModel');
 const verifyAdminRole = async (req, res, next) => {
-    // Verifica si el encabezado de autorización existe y tiene el formato correcto
-    if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Acceso no autorizado' });
-    }
-
-    // Extrae el token del encabezado
-    const token = req.headers.authorization.split(' ')[1];
+    const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
-        return res.status(401).json({ error: 'Token no encontrado' });
+      return res.status(401).json({ error: 'Acceso no autorizado' });
     }
-
+  
     try {
-        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-        const isAdmin = await userModel.checkIfUserIsAdmin(decodedToken.userId);
-
-        if (!isAdmin) {
-            return res.status(403).json({ error: 'Acceso denegado' });
-        }
-
+      const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+      const isAdmin = await userModel.checkIfUserIsAdmin(decodedToken.userId);
+  
+      // Comprueba si el usuario tiene un rol de admin temporal
+      const isAdminTemp = await userModel.checkIfUserIsTempAdmin(decodedToken.userId);
+  
+      if (isAdmin && (req.method === 'GET' || !isAdminTemp)) {
+        // Permitir operaciones si es administrador y la operación es de lectura
+        // o si es un administrador no temporal
         next();
+      } else {
+        // Denegar todas las operaciones de escritura para administradores temporales
+        return res.status(403).json({ error: 'Acceso denegado para operaciones de escritura' });
+      }
     } catch (error) {
-        return res.status(403).json({ error: 'Acceso denegado' });
+      console.error("Error en verifyAdminRole:", error);
+      return res.status(403).json({ error: 'Acceso denegado' });
     }
-};
+  };
 
 // Configuración de Cloudinary
 cloudinary.config({

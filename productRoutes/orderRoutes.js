@@ -11,26 +11,29 @@ const jwt = require('jsonwebtoken');
 const verifyAdminRole = async (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
-        return res.status(401).json({ error: 'Acceso no autorizado' });
+      return res.status(401).json({ error: 'Acceso no autorizado' });
     }
-
+  
     try {
-        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-        const isAdmin = await userModel.checkIfUserIsAdmin(decodedToken.userId);
-        const isReadOperation = req.method === 'GET';
-
-        if (isAdmin && isReadOperation) {
-            // Permitir operaciones de lectura si es administrador
-            next();
-        } else {
-            // Denegar todas las operaciones de escritura, independientemente del estado del minuto de gracia
-            return res.status(403).json({ error: 'Acceso denegado para operaciones de escritura' });
-        }
+      const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+      const isAdmin = await userModel.checkIfUserIsAdmin(decodedToken.userId);
+  
+      // Comprueba si el usuario tiene un rol de admin temporal
+      const isAdminTemp = await userModel.checkIfUserIsTempAdmin(decodedToken.userId);
+  
+      if (isAdmin && (req.method === 'GET' || !isAdminTemp)) {
+        // Permitir operaciones si es administrador y la operación es de lectura
+        // o si es un administrador no temporal
+        next();
+      } else {
+        // Denegar todas las operaciones de escritura para administradores temporales
+        return res.status(403).json({ error: 'Acceso denegado para operaciones de escritura' });
+      }
     } catch (error) {
-        console.error("Error en verifyAdminRole:", error);
-        return res.status(403).json({ error: 'Acceso denegado' });
+      console.error("Error en verifyAdminRole:", error);
+      return res.status(403).json({ error: 'Acceso denegado' });
     }
-};
+  };
 const orderSchema = Joi.object({
     usuario_id: Joi.number().required(),
     estado: Joi.string().valid('APPROVED', 'PENDING', 'REJECTED', 'REFUNDED').required(),
