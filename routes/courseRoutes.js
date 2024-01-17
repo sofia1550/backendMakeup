@@ -18,24 +18,32 @@ const verifyAdminRole = async (req, res, next) => {
   
     try {
       const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-      const isAdmin = await userModel.checkIfUserIsAdmin(decodedToken.userId);
+      const adminStatus = await usuarioModel.checkIfUserIsAdmin(decodedToken.userId);
+      const isReadOperation = req.method === 'GET';
   
-      // Comprueba si el usuario tiene un rol de admin temporal
-      const isAdminTemp = await userModel.checkIfUserIsTempAdmin(decodedToken.userId);
-  
-      if (isAdmin && (req.method === 'GET' || !isAdminTemp)) {
-        // Permitir operaciones si es administrador y la operación es de lectura
-        // o si es un administrador no temporal
-        next();
+      // Si es administrador
+      if (adminStatus.isAdmin) {
+        // Si es administrador temporal y la operación es de lectura, y está dentro del periodo de gracia
+        if (adminStatus.isTemporary && isReadOperation && adminStatus.isWithinGracePeriod) {
+          next();
+        }
+        // Si es administrador permanente, permitir todas las operaciones
+        else if (!adminStatus.isTemporary) {
+          next();
+        }
+        // En otros casos, denegar el acceso
+        else {
+          return res.status(403).json({ error: 'Acceso denegado para operaciones de escritura' });
+        }
       } else {
-        // Denegar todas las operaciones de escritura para administradores temporales
-        return res.status(403).json({ error: 'Acceso denegado para operaciones de escritura' });
+        return res.status(403).json({ error: 'Acceso denegado' });
       }
     } catch (error) {
       console.error("Error en verifyAdminRole:", error);
       return res.status(403).json({ error: 'Acceso denegado' });
     }
   };
+  
 
 // Configuración de Cloudinary
 cloudinary.config({
