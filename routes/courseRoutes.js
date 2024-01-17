@@ -9,7 +9,7 @@ const jwt = require('jsonwebtoken');
 
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const userModel = require('../models/useModel');
+const usuarioModel = require('../models/useModel');
 const verifyAdminRole = async (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {

@@ -23,12 +23,12 @@ const verifyAdminRole = async (req, res, next) => {
 
     // Si es administrador
     if (adminStatus.isAdmin) {
-      // Si es administrador temporal y la operación es de lectura, y está dentro del periodo de gracia
-      if (adminStatus.isTemporary && isReadOperation && adminStatus.isWithinGracePeriod) {
+      // Si es administrador permanente, permitir todas las operaciones
+      if (!adminStatus.isTemporary) {
         next();
       }
-      // Si es administrador permanente, permitir todas las operaciones
-      else if (!adminStatus.isTemporary) {
+      // Si es administrador temporal y la operación es de lectura y está dentro del periodo de gracia
+      else if (adminStatus.isTemporary && isReadOperation && adminStatus.isWithinGracePeriod) {
         next();
       }
       // En otros casos, denegar el acceso
