@@ -20,7 +20,7 @@ const verifyAdminRole = async (req, res, next) => {
         const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
         console.log('verifyAdminRole: Token decoded', decodedToken);
 
-        const adminStatus = await usuarioModel.checkIfUserIsAdmin(decodedToken.userId);
+        const adminStatus = await usuarioModel.checkIfUserIsAdmin(decodedToken.usuario_id);
         console.log('verifyAdminRole: Admin status', adminStatus);
 
         const isReadOperation = req.method === 'GET';
