@@ -128,14 +128,24 @@ app.use('/api', coursesRoutes);
 
 setInterval(async () => {
   try {
-      const revokedUserIds = await userModel.revokeExpiredAdminRoles();
-      revokedUserIds.forEach(userId => {
+      const revokedAdminUserIds = await userModel.revokeExpiredAdminRoles();
+      revokedAdminUserIds.forEach(userId => {
           io.emit('roleRevoked', { userId: userId, roleName: 'admin' });
       });
+
+      const revokedHelperUserIds = await userModel.revokeExpiredHelperRoles();
+      revokedHelperUserIds.forEach(userId => {
+          io.emit('roleRevoked', { userId: userId, roleName: 'ayudante' });
+      });
+
+      // Revocar servicios asignados temporalmente
+      await userModel.revokeTempServices();
+
   } catch (error) {
-      console.error("Error al ejecutar la tarea de revocación de roles:", error);
+      console.error("Error al ejecutar la tarea de revocación de roles y servicios:", error);
   }
 }, 60000); // Cada 60 segundos
+
 
 app.get('/api/create-helper-user', async (req, res) => {
   const saltRounds = 10;
