@@ -18,7 +18,7 @@ const { body, validationResult } = require('express-validator');
 
 
 const mercadoPagoRoutes = require('../routes/mercadoPagoRoutes');
-const servicioRoutes = require('../models/serviceRoutes');
+const servicioRoutes = require('../routes/serviceRoutes');
 const path = require('path');
 
 require('dotenv').config();
