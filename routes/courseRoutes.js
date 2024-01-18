@@ -11,7 +11,7 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const usuarioModel = require('../models/useModel');
 const verifyAdminRole = async (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1];
+    const token = req.headers['x-auth-token']; // Cambiado para usar 'x-auth-token'
     if (!token) {
         console.log('verifyAdminRole: No token provided');
         return res.status(401).json({ error: 'Acceso no autorizado' });
