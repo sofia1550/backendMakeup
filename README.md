@@ -42,13 +42,7 @@ El back-end sirve como una API para el front-end de Makeup. Las rutas incluyen:
 - `/api/products` para productos y compras.
 - `/api/services` para reservar y administrar servicios.
 - `/api/auth` para la autenticación y manejo de sesiones.
-
-## Contribuir
-Si estás interesado en contribuir al proyecto, por favor sigue estos pasos:
-- Realiza un fork del repositorio.
-- Crea una rama para tu característica.
-- Envía un pull request con tus cambios.
-
+etc..
 ## Contacto
 Para soporte o colaboraciones, contáctame en:
 [LinkedIn Sofia Luciuk](https://www.linkedin.com/in/sofia-luciuk/)
