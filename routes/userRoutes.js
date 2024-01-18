@@ -14,7 +14,7 @@ const verifyAdminRole = async (req, res, next) => {
     }
 
     try {
-        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+        const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
         const isAdmin = await userModel.checkIfUserIsAdmin(decodedToken.userId);
         const isReadOperation = req.method === 'GET';
 

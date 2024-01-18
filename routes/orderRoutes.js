@@ -4,7 +4,7 @@ const router = express.Router();
 const orderModel = require('../models/ordenModel');
 const orderDetailsModel = require('../models/detalleOrdenModel');
 const productModel = require('../productModal/productModal');
-const userModel = require('../models/useModel');
+const usuarioModel = require('../models/useModel');
 const jwt = require('jsonwebtoken');
 
 const protectRoute = require('../middlewares/autMiddleware');
@@ -13,22 +13,42 @@ const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const { sendEmail } = require('../utils/emailServices');
+require('dotenv').config();
+
 const verifyAdminRole = async (req, res, next) => {
-    const token = req.headers.authorization.split(' ')[1];
+    const token = req.headers['x-auth-token']; // Cambiado para usar 'x-auth-token'
     if (!token) {
+        console.log('verifyAdminRole: No token provided');
         return res.status(401).json({ error: 'Acceso no autorizado' });
     }
 
     try {
-        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-        const isAdmin = await userModel.checkIfUserIsAdmin(decodedToken.userId);
+        const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
+        console.log('verifyAdminRole: Token decoded', decodedToken);
 
-        if (!isAdmin) {
+        const adminStatus = await usuarioModel.checkIfUserIsAdmin(decodedToken.userId);
+        console.log('verifyAdminRole: Admin status', adminStatus);
+
+        const isReadOperation = req.method === 'GET';
+        console.log('verifyAdminRole: Is read operation', isReadOperation);
+
+        if (adminStatus.isAdmin) {
+            if (adminStatus.isTemporary && isReadOperation && adminStatus.isWithinGracePeriod) {
+                console.log('verifyAdminRole: Temporary admin, read operation allowed');
+                next();
+            } else if (!adminStatus.isTemporary) {
+                console.log('verifyAdminRole: Permanent admin, all operations allowed');
+                next();
+            } else {
+                console.log('verifyAdminRole: Temporary admin, write operation denied');
+                return res.status(403).json({ error: 'Acceso denegado para operaciones de escritura' });
+            }
+        } else {
+            console.log('verifyAdminRole: Not an admin');
             return res.status(403).json({ error: 'Acceso denegado' });
         }
-
-        next();
     } catch (error) {
+        console.error("Error en verifyAdminRole:", error);
         return res.status(403).json({ error: 'Acceso denegado' });
     }
 };
@@ -361,7 +381,7 @@ router.get('/get-comprobante/:id', async (req, res) => {
 });
 
 
-router.delete("/order/:orderId", async (req, res) => {
+router.delete("/order/:orderId", verifyAdminRole, async (req, res) => {
     const orderId = req.params.orderId;
     const order = await orderModel.getOrderById(orderId);
 
@@ -380,7 +400,7 @@ router.delete("/order/:orderId", async (req, res) => {
     await orderModel.deleteOrder(orderId);
     res.send({ message: "Orden eliminada correctamente." });
 });
-router.put('/update-status/:id', protectRoute(['admin']), async (req, res) => {
+router.put('/update-status/:id', protectRoute(['admin']), verifyAdminRole, async (req, res) => {
     const orderId = req.params.id;
     const { estado } = req.body;
 

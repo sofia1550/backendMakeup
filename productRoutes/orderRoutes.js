@@ -7,33 +7,45 @@ const emailService = require('./emailServices');
 const Joi = require('joi');
 const userModel = require('../models/useModel');
 const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 const verifyAdminRole = async (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1];
+    const token = req.headers['x-auth-token']; // Cambiado para usar 'x-auth-token'
     if (!token) {
-      return res.status(401).json({ error: 'Acceso no autorizado' });
+        console.log('verifyAdminRole: No token provided');
+        return res.status(401).json({ error: 'Acceso no autorizado' });
     }
-  
+
     try {
-      const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-      const isAdmin = await userModel.checkIfUserIsAdmin(decodedToken.userId);
-  
-      // Comprueba si el usuario tiene un rol de admin temporal
-      const isAdminTemp = await userModel.checkIfUserIsTempAdmin(decodedToken.userId);
-  
-      if (isAdmin && (req.method === 'GET' || !isAdminTemp)) {
-        // Permitir operaciones si es administrador y la operación es de lectura
-        // o si es un administrador no temporal
-        next();
-      } else {
-        // Denegar todas las operaciones de escritura para administradores temporales
-        return res.status(403).json({ error: 'Acceso denegado para operaciones de escritura' });
-      }
+        const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
+        console.log('verifyAdminRole: Token decoded', decodedToken);
+
+        const adminStatus = await usuarioModel.checkIfUserIsAdmin(decodedToken.userId);
+        console.log('verifyAdminRole: Admin status', adminStatus);
+
+        const isReadOperation = req.method === 'GET';
+        console.log('verifyAdminRole: Is read operation', isReadOperation);
+
+        if (adminStatus.isAdmin) {
+            if (adminStatus.isTemporary && isReadOperation && adminStatus.isWithinGracePeriod) {
+                console.log('verifyAdminRole: Temporary admin, read operation allowed');
+                next();
+            } else if (!adminStatus.isTemporary) {
+                console.log('verifyAdminRole: Permanent admin, all operations allowed');
+                next();
+            } else {
+                console.log('verifyAdminRole: Temporary admin, write operation denied');
+                return res.status(403).json({ error: 'Acceso denegado para operaciones de escritura' });
+            }
+        } else {
+            console.log('verifyAdminRole: Not an admin');
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
     } catch (error) {
-      console.error("Error en verifyAdminRole:", error);
-      return res.status(403).json({ error: 'Acceso denegado' });
+        console.error("Error en verifyAdminRole:", error);
+        return res.status(403).json({ error: 'Acceso denegado' });
     }
-  };
+};
 const orderSchema = Joi.object({
     usuario_id: Joi.number().required(),
     estado: Joi.string().valid('APPROVED', 'PENDING', 'REJECTED', 'REFUNDED').required(),
