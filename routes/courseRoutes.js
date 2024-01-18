@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const { sendEmail } = require('../utils/emailServices');
 const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
