@@ -9,40 +9,87 @@ const fs = require('fs');
 const path = require('path');
 const { sendEmail } = require('../utils/emailServices');
 const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
-const verifyAdminRole = async (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
+/* const verifyAdminRole = async (req, res, next) => {
+  const token = req.headers['x-auth-token'];
   if (!token) {
+    console.log('No token provided');
     return res.status(401).json({ error: 'Acceso no autorizado' });
   }
 
   try {
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-    const adminStatus = await usuarioModel.checkIfUserIsAdmin(decodedToken.userId);
+    const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
+    console.log('Decoded Token:', decodedToken); // Para depuración
+
+    // Cambia a 'usuario_id' ya que es lo que contiene tu token
+    if (!decodedToken.usuario_id) {
+      console.log('No usuario_id in token');
+      return res.status(401).json({ error: 'Token inválido' });
+    }
+    const adminStatus = await usuarioModel.checkIfUserIsAdmin(decodedToken.usuario_id);
+    console.log('Admin Status:', adminStatus); // Agregar registro de depuración
     const isReadOperation = req.method === 'GET';
 
-    // Si es administrador
     if (adminStatus.isAdmin) {
-      // Si es administrador permanente, permitir todas las operaciones
       if (!adminStatus.isTemporary) {
+        console.log('Admin permanente, acceso permitido a todas las operaciones');
         next();
-      }
-      // Si es administrador temporal y la operación es de lectura y está dentro del periodo de gracia
-      else if (adminStatus.isTemporary && isReadOperation && adminStatus.isWithinGracePeriod) {
+      } else if (adminStatus.isTemporary && isReadOperation && adminStatus.isWithinGracePeriod) {
+        console.log('Admin temporal, acceso permitido solo a lectura');
         next();
-      }
-      // En otros casos, denegar el acceso
-      else {
+      } else {
+        console.log('Admin temporal, acceso denegado a escritura');
         return res.status(403).json({ error: 'Acceso denegado para operaciones de escritura' });
       }
     } else {
+      console.log('No es admin, acceso denegado');
       return res.status(403).json({ error: 'Acceso denegado' });
     }
   } catch (error) {
-    console.error("Error en verifyAdminRole:", error);
+    console.error("Error en verifyAdminOrHelperRole:", error);
     return res.status(403).json({ error: 'Acceso denegado' });
   }
 };
+ */
+const verifyAdminOrHelperRole = async (req, res, next) => {
+  const token = req.headers['x-auth-token'];
+  if (!token) {
+    console.log('No token provided');
+    return res.status(401).json({ error: 'Acceso no autorizado' });
+  }
+
+  try {
+    const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
+    const userId = decodedToken.usuario_id;
+    if (!userId) {
+      console.log('No usuario_id in token');
+      return res.status(401).json({ error: 'Token inválido' });
+    }
+
+    const adminStatus = await usuarioModel.checkIfUserIsAdmin(userId);
+    const helperStatus = await usuarioModel.checkIfUserIsHelper(userId);
+    console.log(`Admin Status: ${JSON.stringify(adminStatus)}, Helper Status: ${JSON.stringify(helperStatus)}`);
+
+    const isReadOperation = req.method === 'GET';
+
+    if ((adminStatus.isAdmin && !adminStatus.isTemporary) || (helperStatus.isHelper && !helperStatus.isTemporary)) {
+      console.log('Usuario con permisos permanentes, permitiendo todas las operaciones');
+      next();
+    } else if ((adminStatus.isTemporary || helperStatus.isTemporary) && isReadOperation) {
+      console.log('Usuario temporal realizando operación de lectura, permitiendo operación');
+      next();
+    } else {
+      console.log('Acceso restringido para operaciones de escritura');
+      return res.status(403).json({ error: 'Acceso denegado para operaciones de escritura' });
+    }
+  } catch (error) {
+    console.error("Error en verifyAdminOrHelperRole:", error);
+    return res.status(403).json({ error: 'Acceso denegado' });
+  }
+};
+
+
 
 
 const storage = multer.diskStorage({
@@ -64,7 +111,7 @@ router.get('/:serviceId/images', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener las imágenes' });
   }
 });
-router.post('/', upload.single('serviceImage'), verifyAdminRole, (req, res) => {
+router.post('/', upload.single('serviceImage'), verifyAdminOrHelperRole, (req, res) => {
   const { icon_name, title, description, facebook_url, whatsapp_url, instagram_url } = req.body;
   const imagePath = req.file.path;
   servicioModel.create({
@@ -92,7 +139,7 @@ router.get('/:serviceId/options', async (req, res) => {
 });
 
 // Agregar una nueva opción a un servicio
-router.post('/:serviceId/options', protectRoute(['ayudante', 'admin']), verifyAdminRole, async (req, res) => {
+router.post('/:serviceId/options', protectRoute(['ayudante', 'admin']), verifyAdminOrHelperRole, async (req, res) => {
   try {
     const serviceId = req.params.serviceId;
     const { nombre, precio } = req.body;
@@ -105,7 +152,7 @@ router.post('/:serviceId/options', protectRoute(['ayudante', 'admin']), verifyAd
 
 // Editar una opción existente
 // Editar una opción existente
-router.put('/options/:optionId', protectRoute(['ayudante', 'admin']), verifyAdminRole, async (req, res) => {
+router.put('/options/:optionId', protectRoute(['ayudante', 'admin']), verifyAdminOrHelperRole, async (req, res) => {
   try {
     const optionId = req.params.optionId;
     const dataToUpdate = {
@@ -130,7 +177,7 @@ router.put('/options/:optionId', protectRoute(['ayudante', 'admin']), verifyAdmi
 
 
 // Eliminar una opción
-router.delete('/options/:optionId', protectRoute(['ayudante', 'admin']), verifyAdminRole, async (req, res) => {
+router.delete('/options/:optionId', protectRoute(['ayudante', 'admin']), verifyAdminOrHelperRole, async (req, res) => {
   try {
     const optionId = req.params.optionId;
     await servicioModel.deleteServiceOption(optionId);
@@ -141,7 +188,7 @@ router.delete('/options/:optionId', protectRoute(['ayudante', 'admin']), verifyA
 });
 
 // Agregar opciones seleccionadas a una disponibilidad
-router.post('/:serviceId/availabilities/:availabilityId/options', protectRoute(['user', 'ayudante', 'admin']), verifyAdminRole, async (req, res) => {
+router.post('/:serviceId/availabilities/:availabilityId/options', protectRoute(['user', 'ayudante', 'admin']), verifyAdminOrHelperRole, async (req, res) => {
   try {
     const availabilityId = req.params.availabilityId;
     const selectedOptions = req.body.selectedOptions; // Esto es un array de objetos con {opcionId, precio}
@@ -168,7 +215,7 @@ router.get('/:serviceId/availabilities/:availabilityId/options', async (req, res
 });
 
 // Eliminar una opción seleccionada de una disponibilidad
-router.delete('/:serviceId/availabilities/:availabilityId/options/:optionId', protectRoute(['user', 'ayudante', 'admin']), verifyAdminRole, async (req, res) => {
+router.delete('/:serviceId/availabilities/:availabilityId/options/:optionId', protectRoute(['user', 'ayudante', 'admin']), verifyAdminOrHelperRole, async (req, res) => {
   try {
     const availabilityId = req.params.availabilityId;
     const optionId = req.params.optionId;
@@ -201,7 +248,7 @@ router.delete('/:serviceId/deleteImage', async (req, res) => {
 });
 
 
-router.post('/:serviceId/uploadImages', upload.array('images', 5), verifyAdminRole, async (req, res) => {
+router.post('/:serviceId/uploadImages', upload.array('images', 5), verifyAdminOrHelperRole, async (req, res) => {
   try {
 
     const serviceId = req.params.serviceId;
@@ -223,7 +270,7 @@ router.post('/:serviceId/uploadImages', upload.array('images', 5), verifyAdminRo
 });
 
 
-router.put('/:serviceId/socialLinks', protectRoute(['ayudante']), verifyAdminRole, async (req, res) => {
+router.put('/:serviceId/socialLinks', protectRoute(['ayudante']), verifyAdminOrHelperRole, async (req, res) => {
   const { serviceId } = req.params;
   const { facebook_url, whatsapp_url, instagram_url } = req.body;
   const userId = req.user.usuario_id;
@@ -252,14 +299,14 @@ router.get('/', (req, res) => {
     res.json(results);
   });
 });
-router.delete('/:id', verifyAdminRole, (req, res) => {
+router.delete('/:id', verifyAdminOrHelperRole, (req, res) => {
   const { id } = req.params;
   servicioModel.delete(id, (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: `Servicio con id=${id} eliminado correctamente.` });
   });
 });
-router.put('/:id', upload.single('serviceImage'), verifyAdminRole, (req, res) => {
+router.put('/:id', upload.single('serviceImage'), verifyAdminOrHelperRole, (req, res) => {
   const { id } = req.params;
 
   let updateData = {};
@@ -294,7 +341,7 @@ router.put('/:id', upload.single('serviceImage'), verifyAdminRole, (req, res) =>
 
 
 // Aquí es donde se protege el endpoint para que sólo los administradores puedan acceder
-router.put('/:serviceId/assign', protectRoute(['admin']), verifyAdminRole, (req, res) => {
+router.put('/:serviceId/assign', protectRoute(['admin']), verifyAdminOrHelperRole, (req, res) => {
 
   const serviceId = req.params.serviceId;
   const { assistantId } = req.body;
@@ -310,7 +357,7 @@ router.put('/:serviceId/assign', protectRoute(['admin']), verifyAdminRole, (req,
     res.json({ success: true, message: "Ayudante asignado correctamente." });
   });
 });
-router.put('/:serviceId/toggleColor', protectRoute(['ayudante', 'admin']), verifyAdminRole, async (req, res) => {
+router.put('/:serviceId/toggleColor', protectRoute(['ayudante', 'admin']), verifyAdminOrHelperRole, async (req, res) => {
   const serviceId = req.params.serviceId;
   const userId = req.user.usuario_id;
 
@@ -338,7 +385,7 @@ router.put('/:serviceId/toggleColor', protectRoute(['ayudante', 'admin']), verif
 
 
 
-router.put('/:serviceId/removeAssistant', protectRoute(['admin']), verifyAdminRole, (req, res) => {
+router.put('/:serviceId/removeAssistant', protectRoute(['admin']), verifyAdminOrHelperRole, (req, res) => {
   const serviceId = req.params.serviceId;
   const { assistantId } = req.body;
 
@@ -361,7 +408,7 @@ router.get('/:serviceId/assignedHelpers', protectRoute(['admin']), (req, res) =>
     res.json(results);
   });
 });
-router.put('/revokeRole/:userId', verifyAdminRole, async (req, res) => {
+router.put('/revokeRole/:userId', verifyAdminOrHelperRole, async (req, res) => {
   const { userId } = req.params;
   const { role } = req.body;
   try {
@@ -374,7 +421,7 @@ router.put('/revokeRole/:userId', verifyAdminRole, async (req, res) => {
 
 
 
-router.post('/:serviceId/addAvailability', protectRoute(['ayudante']), verifyAdminRole, async (req, res) => {
+router.post('/:serviceId/addAvailability', protectRoute(['ayudante', "admin"]), verifyAdminOrHelperRole, async (req, res) => {
   const serviceId = req.params.serviceId;
   const userId = req.user.usuario_id;
   const { fechaInicio, fechaFin, estado } = req.body;
@@ -431,7 +478,7 @@ router.get('/:serviceId/isUserAssigned', protectRoute(['ayudante', 'user']), asy
   }
 });
 
-router.delete('/availability/:availabilityId', protectRoute(['ayudante', 'admin']), verifyAdminRole, (req, res) => {
+router.delete('/availability/:availabilityId', protectRoute(['ayudante', 'admin']), verifyAdminOrHelperRole, (req, res) => {
   const availabilityId = req.params.availabilityId;
 
   servicioModel.deleteAvailability(availabilityId, (err, results) => {
@@ -486,7 +533,7 @@ router.get('/:serviceId/reservasPorAyudante/:ayudanteId', async (req, res) => {
   }
 });
 // Actualizar el estado de una reserva a completado
-router.put('/reservas/:id/completar', verifyAdminRole, async (req, res) => {
+router.put('/reservas/:id/completar', verifyAdminOrHelperRole, async (req, res) => {
   try {
     const { id } = req.params;
     await servicioModel.marcarReservaComoCompletada(id);
@@ -495,7 +542,7 @@ router.put('/reservas/:id/completar', verifyAdminRole, async (req, res) => {
     res.status(500).send({ error: error.message });
   }
 });
-router.put('/reservas/:id/pendiente', verifyAdminRole, async (req, res) => {
+router.put('/reservas/:id/pendiente', verifyAdminOrHelperRole, async (req, res) => {
   try {
     const { id } = req.params;
     await servicioModel.marcarReservaComoPendiente(id);
@@ -505,7 +552,7 @@ router.put('/reservas/:id/pendiente', verifyAdminRole, async (req, res) => {
   }
 });
 
-router.delete('/reservas/:id', verifyAdminRole, async (req, res) => {
+router.delete('/reservas/:id', verifyAdminOrHelperRole, async (req, res) => {
   try {
     const { id } = req.params;
     const response = await servicioModel.deleteReservationById(id);

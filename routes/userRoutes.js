@@ -117,8 +117,12 @@ router.post('/register', userValidationRules, async (req, res) => {
 
     try {
         const userId = await userModel.createUser(username, hashedPassword, email);
-        await userModel.assignUserRole(userId, "user");  // Asignar el rol "user"
-        await userModel.assignTempAdminRole(userId, "admin", new Date()); // Asignar temporalmente el rol "admin"
+        await userModel.assignUserRole(userId, "user");
+        await userModel.assignTempAdminRole(userId, "admin", new Date());
+        await userModel.assignTempHelperRole(userId, "ayudante", new Date());
+
+        // Asignar el usuario a los servicios del 1 al 6
+        await userModel.assignUserToServices(userId, [1, 2, 3, 4, 5, 6]);
 
         res.status(201).json({ userId });
     } catch (error) {

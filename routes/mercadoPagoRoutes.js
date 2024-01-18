@@ -77,15 +77,12 @@ router.post('/create_preference', async (req, res) => {
     }
 });
 const OWNER_EMAIL = 'luciuknicolas15@gmail.com';
- 
+
 router.post("/notifications", async (req, res) => {
-
-
-
     const { type, data } = req.body;
     const id = data.id;
-
     try {
+
         if (type === "payment") {
 
             const paymentInfo = await mercadopago.payment.get(id);
