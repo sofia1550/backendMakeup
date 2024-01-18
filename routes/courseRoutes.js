@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const cursoModel = require('./courseModel');
+const cursoModel = require('../models/courseModel');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
@@ -13,37 +13,41 @@ const usuarioModel = require('../models/useModel');
 const verifyAdminRole = async (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
-      return res.status(401).json({ error: 'Acceso no autorizado' });
+        console.log('verifyAdminRole: No token provided');
+        return res.status(401).json({ error: 'Acceso no autorizado' });
     }
-  
+
     try {
-      const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-      const adminStatus = await usuarioModel.checkIfUserIsAdmin(decodedToken.userId);
-      const isReadOperation = req.method === 'GET';
-  
-      // Si es administrador
-      if (adminStatus.isAdmin) {
-        // Si es administrador temporal y la operación es de lectura, y está dentro del periodo de gracia
-        if (adminStatus.isTemporary && isReadOperation && adminStatus.isWithinGracePeriod) {
-          next();
+        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+        console.log('verifyAdminRole: Token decoded', decodedToken);
+
+        const adminStatus = await usuarioModel.checkIfUserIsAdmin(decodedToken.userId);
+        console.log('verifyAdminRole: Admin status', adminStatus);
+
+        const isReadOperation = req.method === 'GET';
+        console.log('verifyAdminRole: Is read operation', isReadOperation);
+
+        if (adminStatus.isAdmin) {
+            if (adminStatus.isTemporary && isReadOperation && adminStatus.isWithinGracePeriod) {
+                console.log('verifyAdminRole: Temporary admin, read operation allowed');
+                next();
+            } else if (!adminStatus.isTemporary) {
+                console.log('verifyAdminRole: Permanent admin, all operations allowed');
+                next();
+            } else {
+                console.log('verifyAdminRole: Temporary admin, write operation denied');
+                return res.status(403).json({ error: 'Acceso denegado para operaciones de escritura' });
+            }
+        } else {
+            console.log('verifyAdminRole: Not an admin');
+            return res.status(403).json({ error: 'Acceso denegado' });
         }
-        // Si es administrador permanente, permitir todas las operaciones
-        else if (!adminStatus.isTemporary) {
-          next();
-        }
-        // En otros casos, denegar el acceso
-        else {
-          return res.status(403).json({ error: 'Acceso denegado para operaciones de escritura' });
-        }
-      } else {
-        return res.status(403).json({ error: 'Acceso denegado' });
-      }
     } catch (error) {
-      console.error("Error en verifyAdminRole:", error);
-      return res.status(403).json({ error: 'Acceso denegado' });
+        console.error("Error en verifyAdminRole:", error);
+        return res.status(403).json({ error: 'Acceso denegado' });
     }
-  };
-  
+};
+
 
 // Configuración de Cloudinary
 cloudinary.config({
