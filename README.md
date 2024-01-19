@@ -33,7 +33,7 @@ Crea un archivo `.env` en la raíz del proyecto y configura las variables necesa
 4. **Ejecutar el Proyecto**: 
 npm start
 
-Asegúrate de tener la base de datos MySQL corriendo y accesible.
+Asegúrate de tener la base de datos MySQL corriendo y accesible (deje la estrctura .sql con el nombre estructura_maquillaje_db para exportarla en raiz).
 
 ## Uso
 El back-end sirve como una API para el front-end de Makeup. Las rutas incluyen:
