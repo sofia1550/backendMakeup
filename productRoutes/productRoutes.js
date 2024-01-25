@@ -22,19 +22,23 @@ router.post('/search', async (req, res) => {
 
     try {
         const doc = nlp(query);
-        let category = null;
+        let categories = [];
 
         // Buscar coincidencias de categoría en la consulta
         CATEGORIAS.forEach(cat => {
             if (doc.has(cat)) {
-                category = cat;
+                categories.push(cat);
             }
         });
 
-        // Si no se encuentra una categoría específica, extraer palabras clave
-        const keywords = category ? [category] : doc.nouns().out('array');
+        // Extraer palabras clave y posibles categorías de la consulta
+        const keywords = doc.nouns().out('array').concat(categories);
 
-        const products = await productModel.searchProducts(keywords.join(' '), category);
+        const products = await productModel.searchProducts(keywords);
+        const foundCategories = products.reduce((acc, product) => {
+            acc.add(product.categoria.toLowerCase());
+            return acc;
+        }, new Set());
 
         if (products.length > 0) {
             res.json({
@@ -46,10 +50,11 @@ router.post('/search', async (req, res) => {
                     marca: product.marca,
                     categoria: product.categoria,
                     imagen_url: product.imagen_url
-                }))
+                })),
+                notFound: categories.filter(cat => !foundCategories.has(cat.toLowerCase()))
             });
         } else {
-            res.status(404).json({ message: 'No se encontraron productos que coincidan con la consulta.' });
+            res.status(404).json({ message: 'No se encontraron productos que coincidan con la consulta.', notFound: categories });
         }
     } catch (error) {
         console.error('Error en la búsqueda de productos:', error);

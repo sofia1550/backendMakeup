@@ -3,30 +3,26 @@ const db = require('../db/db');
 const fs = require('fs').promises;
 const CATEGORIAS = ["Ojos", "Rostro", "Labios", "Uñas"];
 
-exports.searchProducts = async (query) => {
-    const terms = query.split(' ').map(term => term.trim()).filter(term => term.length > 0);
+exports.searchProducts = async (keywords) => {
     let sql = 'SELECT * FROM productos WHERE ';
     const sqlConditions = [];
     const sqlParams = [];
-    let categoryFilter = '';
 
-    // Identificar si la consulta incluye una categoría válida
-    terms.forEach(term => {
-        if (CATEGORIAS.includes(term)) {
-            categoryFilter = term;
+    // Manejar múltiples palabras clave y categorías
+    keywords.forEach(keyword => {
+        if (CATEGORIAS.includes(keyword)) {
+            // Agregar condición para categoría
+            sqlConditions.push('LOWER(categoria) = ?');
+            sqlParams.push(keyword.toLowerCase());
         } else {
+            // Agregar condiciones para palabras clave
             sqlConditions.push(`(LOWER(nombre) LIKE ? OR LOWER(descripcion) LIKE ?)`);
-            sqlParams.push(`%${term.toLowerCase()}%`, `%${term.toLowerCase()}%`);
+            sqlParams.push(`%${keyword.toLowerCase()}%`, `%${keyword.toLowerCase()}%`);
         }
     });
 
-    // Agregar filtro de categoría si existe
-    if (categoryFilter) {
-        sqlConditions.push('LOWER(categoria) = ?');
-        sqlParams.push(categoryFilter.toLowerCase());
-    }
-
-    sql += sqlConditions.join(' AND ');
+    // Unir todas las condiciones con OR para una búsqueda más inclusiva
+    sql += sqlConditions.join(' OR ');
 
     return new Promise((resolve, reject) => {
         db.query(sql, sqlParams, (err, products) => {
