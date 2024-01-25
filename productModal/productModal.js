@@ -1,6 +1,49 @@
 const db = require('../db/db');
 
 const fs = require('fs').promises;
+const CATEGORIAS = ["Ojos", "Rostro", "Labios", "Uñas"];
+
+exports.searchProducts = async (query) => {
+    const terms = query.split(' ').map(term => term.trim()).filter(term => term.length > 0);
+    let sql = 'SELECT * FROM productos WHERE ';
+    const sqlConditions = [];
+    const sqlParams = [];
+    let categoryFilter = '';
+
+    // Identificar si la consulta incluye una categoría válida
+    terms.forEach(term => {
+        if (CATEGORIAS.includes(term)) {
+            categoryFilter = term;
+        } else {
+            sqlConditions.push(`(LOWER(nombre) LIKE ? OR LOWER(descripcion) LIKE ?)`);
+            sqlParams.push(`%${term.toLowerCase()}%`, `%${term.toLowerCase()}%`);
+        }
+    });
+
+    // Agregar filtro de categoría si existe
+    if (categoryFilter) {
+        sqlConditions.push('LOWER(categoria) = ?');
+        sqlParams.push(categoryFilter.toLowerCase());
+    }
+
+    sql += sqlConditions.join(' AND ');
+
+    return new Promise((resolve, reject) => {
+        db.query(sql, sqlParams, (err, products) => {
+            if (err) {
+                reject(new Error("Error al buscar productos: " + err.message));
+            } else {
+                resolve(products);
+            }
+        });
+    });
+};
+
+
+
+
+
+
 exports.updateProductStock = async (id, newStock) => {
     const sql = 'UPDATE productos SET stock = ? WHERE id = ?';
     return new Promise((resolve, reject) => {

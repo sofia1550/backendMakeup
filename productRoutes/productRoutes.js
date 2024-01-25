@@ -4,9 +4,63 @@ const productModel = require('../productModal/productModal');
 const multer = require('multer');
 const path = require('path');
 const jwt = require('jsonwebtoken');
+const usuarioModel = require('../models/useModel');
+
 require('dotenv').config();
 
-const usuarioModel = require('../models/useModel');
+
+const nlp = require('compromise');
+
+const CATEGORIAS = ["Ojos", "Rostro", "Labios", "Uñas"];
+
+router.post('/search', async (req, res) => {
+    const { query } = req.body;
+
+    if (!query) {
+        return res.status(400).json({ message: 'Consulta de búsqueda requerida.' });
+    }
+
+    try {
+        const doc = nlp(query);
+        let category = null;
+
+        // Buscar coincidencias de categoría en la consulta
+        CATEGORIAS.forEach(cat => {
+            if (doc.has(cat)) {
+                category = cat;
+            }
+        });
+
+        // Si no se encuentra una categoría específica, extraer palabras clave
+        const keywords = category ? [category] : doc.nouns().out('array');
+
+        const products = await productModel.searchProducts(keywords.join(' '), category);
+
+        if (products.length > 0) {
+            res.json({
+                message: 'Productos encontrados:',
+                data: products.map(product => ({
+                    id: product.id,
+                    nombre: product.nombre,
+                    precio: product.precio,
+                    marca: product.marca,
+                    categoria: product.categoria,
+                    imagen_url: product.imagen_url
+                }))
+            });
+        } else {
+            res.status(404).json({ message: 'No se encontraron productos que coincidan con la consulta.' });
+        }
+    } catch (error) {
+        console.error('Error en la búsqueda de productos:', error);
+        res.status(500).json({ message: 'Error interno al buscar productos.' });
+    }
+});
+
+
+
+
+
 const verifyAdminRole = async (req, res, next) => {
     const token = req.headers['x-auth-token']; // Cambiado para usar 'x-auth-token'
     if (!token) {
