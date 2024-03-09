@@ -4,11 +4,12 @@ const util = require('util');
 
 const dbConfig = {
   host: process.env.DB_HOST,
+  port: process.env.DB_PORT, // Asegúrate de agregar esto si antes no lo utilizabas
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  connectionLimit: 10
 };
+
 
 let pool;
 let connectionAttempts = 0;
@@ -53,3 +54,4 @@ function initializePool() {
 initializePool();
 
 module.exports = pool;
+
