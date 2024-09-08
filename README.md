@@ -1,51 +1,51 @@
-# Makeup - Back-end
 
-## Descripción
-Este repositorio contiene el back-end de Makeup, un proyecto full stack para servicios y productos de belleza. Está construido utilizando Node.js, Express.js y se conecta a una base de datos MySQL, manejando tanto la lógica de negocio como la gestión de datos.
+# 🌟 Backend para Proyecto E-commerce Peluquería 💇‍♀️
 
-## Características
-- API RESTful para manejar servicios, productos y usuarios.
-- Autenticación y autorización de usuarios con JWT.
-- Sistema de roles para usuarios y ayudantes.
-- Integración de correo electrónico para notificaciones.
+Este es el backend del proyecto E-commerce y sistema de gestión para un salón de belleza/peluquería. Está desarrollado en Node.js con Express, utilizando Sequelize como ORM para MySQL.
 
-## Tecnologías Utilizadas
-- Node.js
-- Express.js
-- MySQL
-- JWT para autenticación
-- Nodemailer y @sendgrid/mail para emails
-- Otras dependencias importantes: bcrypt, cors, dotenv, helmet, etc.
+## 🎨 Características del Backend
 
-## Instalación
-Para instalar y ejecutar el back-end de Makeup en tu entorno local, sigue estos pasos:
+- **Autenticación Segura** 🔐: Implementación de **JWT** para asegurar las rutas.
+- **Mercado Pago** 💳: Integración para la gestión de pagos en el e-commerce.
+- **Servicios Gestionables** 💼: Administración de servicios y asignación de empleados, con contacto directo por WhatsApp.
+- **Notificaciones en tiempo real** 📡: Utilizando **Socket.IO** para actualizaciones de órdenes y disponibilidad.
+- **Gestión de productos** 🛍️: Creación, edición y eliminación de productos con la posibilidad de destacarlos en el carrousel 3D.
 
-1. **Clonar el Repositorio**: 
-git clone https://github.com/tu-usuario/makeup-back-end.git
-cd makeup-back-end
+## 🛠️ Tecnologías Utilizadas
 
-2. **Instalar Dependencias**: 
+- 🟢 **Node.js** con **Express.js** como framework.
+- 🗄️ **Sequelize** como ORM para **MySQL**.
+- 📡 **Socket.IO** para notificaciones en tiempo real.
+- 🛡️ **Helmet** y **express-rate-limit** para la seguridad de la API.
+
+## 📦 Instalación
+
+1. Clona el repositorio:
+```bash
+git clone https://github.com/sofia1550/backendIAEcommerce.git
+```
+
+2. Instala las dependencias:
+```bash
 npm install
+```
 
-3. **Configurar Variables de Entorno**: 
-Crea un archivo `.env` en la raíz del proyecto y configura las variables necesarias (p.ej., credenciales de la base de datos, claves secretas para JWT, etc.).
+3. Configura las variables de entorno (.env) con los detalles de tu base de datos y credenciales de API (Mercado Pago, JWT).
 
-4. **Ejecutar el Proyecto**: 
-npm start
+4. Ejecuta el servidor:
+```bash
+npm run dev
+```
 
-Asegúrate de tener la base de datos MySQL corriendo y accesible (deje la estrctura .sql con el nombre estructura_maquillaje_db para exportarla en raiz).
+## 🌐 Rutas de la API
 
-## Uso
-El back-end sirve como una API para el front-end de Makeup. Las rutas incluyen:
+- **/api/auth**: Autenticación y registro de usuarios.
+- **/api/products**: CRUD de productos.
+- **/api/orders**: Gestión de órdenes y pagos.
+- **/api/services**: Gestión de servicios y asignación de empleados.
 
-- `/api/users` para la gestión de usuarios.
-- `/api/products` para productos y compras.
-- `/api/services` para reservar y administrar servicios.
-- `/api/auth` para la autenticación y manejo de sesiones.
-etc..
-## Contacto
-Para soporte o colaboraciones, contáctame en:
-[LinkedIn Sofia Luciuk](https://www.linkedin.com/in/sofia-luciuk/)
+## 🔗 Repositorio
 
+- **Backend:** [Repositorio Backend](https://github.com/sofia1550/backendIAEcommerce)
 
 
